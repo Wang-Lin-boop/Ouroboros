@@ -94,9 +94,8 @@ pip install dgllife
 
 pip install torchtriton --extra-index-url "https://download.pytorch.org/whl/nightly/cu121"
 ```
-
 <br>
-</details>   
+</details>
 
 <details>
 <summary>Download datasets and Ouroboros models</summary>
