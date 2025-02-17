@@ -16,23 +16,23 @@ Artificial neural networks have rapidly advanced representation learning and gen
 
 ## 💡 Highlight
 
-Overview:
+**Overview:**
 
 * Ouroboros introduces a new protocol to **unify the representative learning and molecular generation**.      
 * Ouroboros towards directed chemical evolution in **encoding space**, which was designed to mimic the chemical space.     
 * Ouroboros provides a molecular representation that can be flexibly encoded and decoded, **allowing new models built upon it to be easily applied to molecular generation**.     
 
-Chemical Space Modeling:
+**Chemical Space Modeling:**
 
 * Ouroboros projects molecules of different sizes and structures into a **1D Vector** and ensures that the similarities of this **1D Vector** are pharmacophore meaningful.     
 * Ouroboros' **1D Vector** can be reconstructed to the original chemical structure.     
 
-Chemical Foundational Model:
+**Chemical Foundational Model:**
 
 * Ouroboros not only provides **molecule-to-encoding** transformation, but also **encoding-to-molecule** reconstruction.     
 * You can practice **directed chemical evolution on any downstream model built on Ouroboros**.     
 
-Prospective:
+**Prospective:**
 
 * The Ouroboros framework can **accommodate other molecular representation learning strategies (chemicals vs multi-omics, phenotype)** to hold more information in the encoding space.       
 * Predictive models of protein-ligand recognition, durg-target affinity or other chemical propteries trained using Ouroboros will be promising for target-based molecule generation.      
@@ -80,7 +80,7 @@ If you encounter any problems with the installation, please feel free to post an
     source ~/.bashrc
 ```
 
-Before running Ouroboros, you need to install the basic dependency packages.   
+Before running Ouroboros, you need to install dependency packages.   
 
 ```
 conda activate -n Ouroboros python=3.9
