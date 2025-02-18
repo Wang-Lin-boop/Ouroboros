@@ -8,7 +8,8 @@ import pandas as pd
 from .modules import (
     MultiPropDecoder, 
     optimizers_dict, 
-    ListLoss
+    ListLoss,
+    activation_dict
 )
 from utils.metrics import metric_functions, statistics_dict
 from tqdm import tqdm
@@ -30,7 +31,7 @@ class QSAR(GeminiMol):
             params = {
                 "hidden_dim": 1024,
                 "dropout_rate": 0.1,
-                "projector": 'KAN',
+                "activation": 'SiLU',
                 "projection_transform": 'Sigmoid',
                 "linear_projection": False
             }
@@ -42,15 +43,6 @@ class QSAR(GeminiMol):
         )
         self.model_name = model_name
         self.predictor_name = predictor_name
-        self.projector = nn.Sequential(
-            nn.Dropout(p = 0.5),
-            nn.Linear(
-                self.encoder_params['encoding_features'], 
-                8192,
-            ),
-            nn.Sigmoid(),
-        )
-        self.projector.cuda()
         if os.path.exists(f'{self.model_name}/{self.predictor_name}/Decoder.pt'):
             self.predictor_info = json.load(
                 open(
@@ -63,8 +55,16 @@ class QSAR(GeminiMol):
                     'r'
             ))
             self.label_list = list(self.predictor_info['label_dict'].keys())
+            self.projector = nn.Sequential(
+                nn.Dropout(p = 0.5),
+                nn.Linear(
+                    self.encoder_params['encoding_features'], 
+                    12288,
+                ),
+                activation_dict[params['activation']],
+            )
             self.decoder = MultiPropDecoder(
-                feature_dim = self.encoder_params['encoding_features'] + 8192,
+                feature_dim = (self.encoder_params['encoding_features'], 12288),
                 output_dim = len(self.label_list),
                 **params
             )
@@ -85,11 +85,20 @@ class QSAR(GeminiMol):
             ) as f:
                 json.dump(params, f, ensure_ascii=False, indent=4)
             self.label_list = list(self.predictor_info['label_dict'].keys())
+            self.projector = nn.Sequential(
+                nn.Dropout(p = 0.5),
+                nn.Linear(
+                    self.encoder_params['encoding_features'], 
+                    12288,
+                ),
+                activation_dict[params['activation']],
+            )
             self.decoder = MultiPropDecoder(
-                feature_dim = self.encoder_params['encoding_features'] + 8192,
+                feature_dim = (self.encoder_params['encoding_features'], 12288),
                 output_dim = len(self.label_list),
                 **params
             )
+        self.projector.cuda()
         self.decoder.cuda()
 
     def load(self):
@@ -134,11 +143,7 @@ class QSAR(GeminiMol):
         features = self.encode(total_smiles_list)
         projected_feats = self.projector(features)
         # Calculate scores of encoded smiles
-        return self.decoder(
-            torch.cat(
-                (projected_feats, features), dim = -1
-            )
-        )
+        return self.decoder(features, projected_feats)
 
     def predict_score(
             self, 
@@ -216,15 +221,14 @@ class QSAR(GeminiMol):
         optimizer = optimizers_dict[optim_type](
             [
                 {'params': self.decoder.parameters(), 'lr': learning_rate},
-                {'params': self.projector.parameters(), 'lr': learning_rate}
             ], 
             lr = learning_rate,
             weight_decay = weight_decay
         )
         self.encoder_finetune = False
         # set up the early stop params
-        _, best_model_score = self.evaluate(val_set)
-        print(f"NOTE: The initial model score is {round(best_model_score, 4)}.")
+        _, self.best_model_score = self.evaluate(val_set)
+        print(f"NOTE: The initial model score is {round(self.best_model_score, 4)}.")
         counter = 0
         batch_id = 0
         # Apply warm-up learning rate
@@ -242,7 +246,6 @@ class QSAR(GeminiMol):
             label_col = self.label_list
         for epoch in range(epochs):
             self.decoder.train()
-            self.projector.train()
             train_set = train_set.sample(frac=1)
             for i in range(0, len(train_set), self.batch_size):
                 if batch_id == frozen_steps:
@@ -254,6 +257,10 @@ class QSAR(GeminiMol):
                         {'params': self.pooling.parameters(), 'lr': learning_rate}
                     )
                     self.pooling.train()
+                    optimizer.add_param_group(
+                        {'params': self.projector.parameters(), 'lr': learning_rate}
+                    )
+                    self.projector.train()
                     self.encoder_finetune = True
                 batch_id += 1
                 rows = train_set.iloc[i:i+self.batch_size]
@@ -316,12 +323,12 @@ class QSAR(GeminiMol):
                     # Evaluation on validation set, if provided
                     _, val_model_score = self.evaluate(val_set)
                     self.decoder.train()
-                    self.projector.train()
                     if self.encoder_finetune:
                         self.Encoder.train()
                         self.pooling.train()
-                    if val_model_score > best_model_score or np.isnan(best_model_score):
-                        best_model_score = val_model_score
+                        self.projector.train()
+                    if val_model_score > self.best_model_score or np.isnan(self.best_model_score):
+                        self.best_model_score = val_model_score
                         self.save()
                         if counter > 0:
                             counter -= 1
@@ -335,9 +342,9 @@ class QSAR(GeminiMol):
                 break
         _, val_model_score = self.evaluate(val_set)
         print(f"Training over! Evaluating on the validation set: {val_model_score}")
-        if val_model_score > best_model_score:
-            best_model_score = val_model_score
+        if val_model_score > self.best_model_score:
+            self.best_model_score = val_model_score
             self.save()
-        print(f"Best Model Score: {best_model_score}")
+        print(f"Best Model Score: {self.best_model_score}")
         self.load()
 

@@ -2,12 +2,9 @@ import os
 import sys
 import torch
 import pandas as pd
-from model.GeminiMol import GeminiMol
+from model.Ouroboros import Ouroboros
 from utils.chem import gen_standardize_smiles, check_smiles_validity, is_valid_smiles
 import gc
-
-def aggregate(x):
-    return ':'.join(x.unique())
 
 class Pharm_Profiler:
     def __init__(self, 
@@ -55,12 +52,17 @@ class Pharm_Profiler:
         if prepare:
             compound_library = self.prepare(compound_library, smiles_column=smiles_column)
         print(f'NOTE: the compound library contains {len(compound_library)} compounds.')
-        compound_library = compound_library.groupby(smiles_column).agg(aggregate).reset_index()
+        compound_library.drop_duplicates(
+            subset = [smiles_column],
+            keep='first',
+            inplace = True,
+            ignore_index = True
+        )
         print(f'NOTE: non-duplicates compound library contains {len(compound_library)} compounds.')
         self.database = self.encoder.create_database(
             compound_library, 
             smiles_column = smiles_column, 
-            worker_num = 1
+            worker_num = 3
         )
         print('NOTE: features database was created.')
         gc.collect()
@@ -91,7 +93,7 @@ class Pharm_Profiler:
                     smiles_column = smiles_column, 
                     return_all_col = False,
                     similarity_metrics = [smiliarity_metrics],
-                    worker_num = 4
+                    worker_num = 24
                 )
                 probe_res.sort_values(smiliarity_metrics, ascending=False, inplace=True)
                 probe_res.drop_duplicates(
@@ -116,11 +118,10 @@ class Pharm_Profiler:
                         [probe['smiles'][i]], 
                         self.database, 
                         input_with_features = True,
-                        reverse = False, 
                         smiles_column = smiles_column, 
                         return_all_col = False,
                         similarity_metrics = [smiliarity_metrics],
-                        worker_num = 4
+                        worker_num = 24
                     )
                     probe_res[smiliarity_metrics] = probe_res[smiliarity_metrics].apply(
                         lambda x: x if x > flooding else 0.0
@@ -135,7 +136,11 @@ class Pharm_Profiler:
             print('Done!')
             probe_res = None
             gc.collect()
-        total_res['Score'] = total_res[score_list].apply(lambda row: (row - flooding).clip(lower=0).sum(), axis=1)
+        total_res['Score'] = total_res[score_list].sum(axis=1)
+        total_res = total_res[total_res['Score'] > 0]
+        total_res['Score'] = total_res[score_list].apply(
+            lambda row: (row - flooding).clip(lower=0).sum(), axis=1
+        )
         return total_res
 
 if __name__ == '__main__':
@@ -145,18 +150,21 @@ if __name__ == '__main__':
     print('GPU number:', torch.cuda.device_count())  # Should be > 0
     ## load model
     model_name = sys.argv[1]
-    encoder = GeminiMol(
-            model_name,
-            batch_size = 2048
-        )
+    encoder = Ouroboros(
+        model_name,
+        batch_size = 2048,
+        predictor_info = {},
+        generator = False,
+        flooding = [0.3, 0.6], # CSS sim, 2D sim, min sim
+        threads = 40
+    )
     predictor = Pharm_Profiler(
         encoder,
-        standardize = False
-        )
+        standardize = True
+    )
     # job_name
     job_name = sys.argv[2]
     smiles_col = sys.argv[3]
-    library_path = f'{os.path.dirname(sys.argv[4])}/{os.path.splitext(os.path.basename(sys.argv[4]))[0]}' 
     # update profiles
     ref_smiles_table = pd.read_csv(sys.argv[5])
     if sys.argv[6] not in ['Fasle', 'None', 'F', 'No', 'N', 'no', 'false', 'none']:
@@ -184,14 +192,13 @@ if __name__ == '__main__':
             label_col = group_param[0]
             weight_col = group_param[1]
             for group in ref_smiles_table[label_col].to_list():
-                for weight in ref_smiles_table[weight_col].to_list():
-                    predictor.update_probes(
-                        name = f'{group}_{weight}',
-                        smiles_list = ref_smiles_table[
-                            ref_smiles_table[label_col]==group & ref_smiles_table[weight_col]== weight
-                        ][smiles_col].to_list(),
-                        weight = weight
-                    )
+                assert len(ref_smiles_table[ref_smiles_table[label_col]==group][weight_col].to_list()), "Error: profile weight no more than 2!"
+                weight = ref_smiles_table[ref_smiles_table[label_col]==group][weight_col].to_list()[0]
+                predictor.update_probes(
+                    name = f'{group}',
+                    smiles_list = ref_smiles_table[ref_smiles_table[label_col]==group][smiles_col].to_list(),
+                    weight = weight
+                )
         else:
             assert len(group_param) <= 2, "Error: profile tags no more than 2!"
     else:
@@ -202,32 +209,32 @@ if __name__ == '__main__':
         )
     probe_cluster = True if sys.argv[7] in [
         'True', 'true', 'T', 't', 'Yes', 'yes', 'Y', 'y'
-        ] else False
+    ] else False
     flooding = float(sys.argv[8])
-    keep_ratio = float(sys.argv[9])
     # generate features database
-    if os.path.exists(f'{library_path}.parquet'):
-        predictor.database = pd.read_parquet(f'{library_path}.parquet')
+    library_name = f'{os.path.splitext(os.path.basename(sys.argv[4]))[0]}' 
+    if os.path.exists(f'{library_name}.pkl'):
+        predictor.database = pd.read_pickle(f'{library_name}.pkl')
+    elif os.path.exists(f'{model_name}/{library_name}.pkl'):
+        predictor.database = pd.read_pickle(f'{model_name}/{sys.argv[4]}.pkl')
     else:
         compound_library = pd.read_csv(sys.argv[4])
         features_database = predictor.update_library(
             compound_library,
-            prepare = True,
+            prepare = False,
             smiles_column = smiles_col,
         )
         # save database to parquet
-        features_database.to_parquet(f'{library_path}.parquet')
+        features_database.to_pickle(f'{model_name}/{library_name}.pkl')
         del compound_library
         del features_database
         gc.collect()
     # virtual screening 
-    keep_number = int(len(predictor.database)*keep_ratio)
     total_res = predictor(
         smiles_column = smiles_col,
         probe_cluster = probe_cluster,
         flooding = flooding
     )
-    total_res = total_res.nlargest(keep_number, 'Score', keep='all')
     total_res.sort_values('Score', ascending=False, inplace=True)
     total_res.to_csv(f"{job_name}_results.csv", index=False, header=True, sep=',')
     print(f'NOTE: job completed! check {job_name}_results.csv for results!')

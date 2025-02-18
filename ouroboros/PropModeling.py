@@ -1,4 +1,5 @@
 import sys
+import os
 import numpy as np
 import pandas as pd
 import torch
@@ -17,10 +18,9 @@ if __name__ == "__main__":
     torch.cuda.manual_seed_all(training_random_seed)
     # params
     data_path = sys.argv[1]
-    geminimol_path = sys.argv[2]
+    ouroboros_path = sys.argv[2]
     smiles_names = sys.argv[3]
-    task_type = sys.argv[4].split('@')[0]
-    label_info = sys.argv[4].split('@')[1]
+    label_info = sys.argv[4]
     predictor_name = sys.argv[5]
     label_dict = {}
     for label in label_info.split(','):
@@ -42,45 +42,55 @@ if __name__ == "__main__":
         len(test_data), 
         )
     # normalize data
-    if task_type == 'regression':
-        for label in label_dict.keys():
-            max_value = train_data[label].max()
-            min_value = train_data[label].min()
-            print(f'NOTE: {label} max value: {max_value}, min value: {min_value}.')
+    task_type_list = []
+    for label in label_dict.keys():
+        max_value = train_data[label].max()
+        min_value = train_data[label].min()
+        if min_value == 0.0 and max_value == 1.0:
+            print(f'NOTE: binary {label}.')
+            task_type_list.append('binary')
+        else:
+            print(f'NOTE: regression {label} max value: {max_value}, min value: {min_value}.')
             train_data[label] = train_data[label].apply(lambda x: (x - min_value) / (max_value - min_value))
             val_data[label] = val_data[label].apply(lambda x: (x - min_value) / (max_value - min_value))
             test_data[label] = test_data[label].apply(lambda x: (x - min_value) / (max_value - min_value))
+            task_type_list.append('regression')
+    if 'regression' in task_type_list and 'binary' in task_type_list:
+        task_type = 'regression'
+        print(f'NOTE: some label is regression, and some is binary. So we set {predictor_name} as regression model.')
+    elif 'regression' in task_type_list:
+        task_type = 'regression'
+        print(f'NOTE: all label is regression. So we set {predictor_name} as regression model.')
     else:
-        for label in label_dict.keys():
-            print(f'NOTE: {label} is a binary label.')
-            print(f'NOTE: {len(train_data[train_data[label] == 1])} {label} is 1.')
-            print(f'NOTE: {len(train_data[train_data[label] == 0])} {label} is 0.')
-    ## create the encoder models
-    QSAR_model = QSAR(
-        model_name = geminimol_path,
-        predictor_name = predictor_name,
-        batch_size = 512,
-        predictor_info = {
-            'smiles_name': smiles_names,
-            'task_type': task_type,
-            'label_dict': label_dict,
-        },
-        params = {
-            "hidden_dim": 1024,
-            "dropout_rate": 0.0,
-            "projector": 'SiLU',
-            "projection_transform": 'Sigmoid',
-            "linear_projection": False
-        }
-    )
+        task_type = 'binary'
+        print(f'NOTE: all label is binary. So we set {predictor_name} as binary classification model.')
+    # set hyper-parameters based on the number of training samples
     if len(train_data) > 20000:
-        batch_size, learning_rate, batch_group = 128, 1.0e-5, 10
+        batch_size, learning_rate, batch_group = 128, 3.0e-5, 10
     elif len(train_data) > 5000:
         batch_size, learning_rate, batch_group = 96, 1.0e-5, 10
     elif len(train_data) > 1000:
         batch_size, learning_rate, batch_group = 64, 1.0e-5, 5
     else:
         batch_size, learning_rate, batch_group = 48, 1.0e-5, 5
+    ## create the encoder models
+    QSAR_model = QSAR(
+        model_name = ouroboros_path,
+        predictor_name = predictor_name,
+        batch_size = batch_size,
+        predictor_info = {
+            'smiles_name': smiles_names,
+            'task_type': task_type,
+            'label_dict': label_dict,
+        },
+        params = {
+            "hidden_dim": 12288, # between 2048 and 12288
+            "dropout_rate": 0.3 if task_type == 'binary' else 0.1, 
+            "activation": 'SiLU',
+            "projection_transform": 'Sigmoid',
+            "linear_projection": False
+        }
+    )
     QSAR_model.fit(
         train_data.sample(frac=1.0),
         val_data,
@@ -101,10 +111,10 @@ if __name__ == "__main__":
     print(f'{predictor_name} Model performance: ')
     test_res, test_score = QSAR_model.evaluate(test_data)
     test_res.to_csv(
-        f"{predictor_name}_results.csv", 
+        f"{predictor_name}_{os.path.basename(ouroboros_path)}_results.csv", 
         index=True, 
         header=True, 
         sep=','
     )
-    print(f"NOTE: {predictor_name} Test Score: {test_score}")
+    print(f"NOTE: {predictor_name} Test Score: {test_score} Val Score: {QSAR_model.best_model_score}")
     print('============================')

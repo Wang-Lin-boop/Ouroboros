@@ -11,6 +11,10 @@ from sklearn.metrics import (
 )
 from scipy.stats import pearsonr, spearmanr
 import oddt.metrics as vsmetrics
+from sklearn.metrics.pairwise import pairwise_distances
+from sklearn.manifold import TSNE
+from sklearn.decomposition import PCA, DictionaryLearning, KernelPCA, IncrementalPCA, FastICA, SparsePCA, FactorAnalysis
+from sklearn.cluster import KMeans, AgglomerativeClustering, MeanShift, DBSCAN, AffinityPropagation, SpectralClustering, Birch, OPTICS
 
 metric_functions = {
     'AUROC': lambda y_true, y_pred: roc_auc_score(y_true, y_pred),
@@ -86,3 +90,43 @@ label_map = {
     1: 1, 
     0: 0
 }
+
+cluster_models = {
+    'K-Means': lambda num_clusters: KMeans(n_clusters=num_clusters),
+    'euclidean': lambda num_clusters: AgglomerativeClustering(n_clusters=num_clusters),
+    'manhattan': lambda num_clusters: AgglomerativeClustering(
+        metric='manhattan', 
+        linkage='average',
+        n_clusters=num_clusters
+    ),
+    'cosine': lambda num_clusters: AgglomerativeClustering(
+        metric='cosine', 
+        linkage='average',
+        n_clusters=num_clusters
+    ),
+    'MeanShift': lambda num_clusters: MeanShift(),
+    'DBSCAN': lambda num_clusters: DBSCAN(),
+    'DBSCAN_hamming': lambda num_clusters: DBSCAN(
+        metric='hamming',
+        eps=0.3,
+    ),
+    'AffinityPropagation': lambda num_clusters: AffinityPropagation(),
+    'Spectral': lambda num_clusters: SpectralClustering(n_clusters=num_clusters),
+    'Birch': lambda num_clusters: Birch(n_clusters=num_clusters),
+    'OPTICS': lambda num_clusters: OPTICS(),
+    'OPTICS_hamming': lambda _: OPTICS(metric='hamming'),
+}
+
+reduce_dimension = {
+    'PCA': lambda features, dim_num, seed: PCA(n_components=dim_num, random_state=seed).fit_transform(features),
+    'tSNE': lambda features, dim_num, seed: TSNE(n_components=dim_num, random_state=seed).fit_transform(features),
+    'Dict': lambda features, dim_num, seed: DictionaryLearning(n_components=dim_num, random_state=seed).fit_transform(features),
+    'KPCA': lambda features, dim_num, seed: KernelPCA(n_components=dim_num, random_state=seed).fit_transform(features),
+    'IPCA': lambda features, dim_num, seed: IncrementalPCA(n_components=dim_num).fit_transform(features),
+    'ICA': lambda features, dim_num, seed: FastICA(n_components=dim_num, random_state=seed).fit_transform(features),
+    'SPCA': lambda features, dim_num, seed: SparsePCA(n_components=dim_num, random_state=seed).fit_transform(features),
+    'FA': lambda features, dim_num, seed: FactorAnalysis(n_components=dim_num, random_state=seed).fit_transform(features),
+}
+
+
+

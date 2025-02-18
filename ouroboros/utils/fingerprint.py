@@ -21,7 +21,19 @@ class Fingerprint():
                 'Dice', 'Cosine', 'Sokal', 'Russel', 'Kulczynski', 'McConnaughey', 
                 'TverskyR', 'TverskyF', 'Tversky'
             ]
-            ):
+        ):
+        self.dim_dict = {
+            "MACCS": 167,
+            "RDK": 2048,
+            "Layered": 2048,
+            "Pattern": 2048,
+            "TopologicalTorsion": 2048,
+            "AtomPairs": 2048,
+            "ECFP4": 2048,
+            "FCFP4": 2048,
+            "ECFP6": 2048,
+            "FCFP6": 2048,
+        }
         self.fingerprint_dict = {
             "similarity": {
                 "MACCS": MACCSkeys.GenMACCSKeys,
@@ -108,7 +120,6 @@ class Fingerprint():
             self, 
             ref_smiles_list, 
             query_smiles_table, 
-            reverse = True, 
             smiles_column = 'smiles', 
             similarity_metrics = None
         ):
@@ -135,5 +146,5 @@ class Fingerprint():
     def extract_fingerprints(self, query_smiles_table, smiles_column='smiles'):
         return pd.DataFrame(query_smiles_table[smiles_column].apply(lambda x:self.gen_fingerprints_list(x)).to_list()).add_prefix('FP_')
     
-    def extract_features(self, query_smiles_table, smiles_column='smiles'):
-        return pd.DataFrame(query_smiles_table[smiles_column].apply(lambda x:self.gen_fingerprints_list(x)).to_list()).add_prefix('FP_')
+    def extract_features(self, query_smiles_table, smiles_column='smiles', prefix='FP_'):
+        return pd.DataFrame(query_smiles_table[smiles_column].apply(lambda x:self.gen_fingerprints_list(x)).to_list()).add_prefix(prefix)

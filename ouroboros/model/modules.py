@@ -1,3 +1,5 @@
+import io
+import sys
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -42,6 +44,18 @@ optimizers_dict = {
         torch.optim.NAdam, 
         betas = (0.9, 0.98),
     ),
+    'L-AdamW': partial(
+        torch.optim.AdamW, 
+        betas = (0.95, 0.999),
+    ),
+    'AdamW-B2-D': partial(
+        torch.optim.AdamW, 
+        betas = (0.9, 0.95),
+    ),
+    'AdamW-B2-DD': partial(
+        torch.optim.AdamW, 
+        betas = (0.9, 0.9),
+    ),
     'Adam': partial(
         torch.optim.Adam,
         betas = (0.9, 0.98),
@@ -71,6 +85,23 @@ def initialize_weights(model):
     for module in model.modules():
         if isinstance(module, (nn.Conv2d, nn.Linear)):
             init.kaiming_normal_(module.weight)
+
+def params2layerlist(params, layer_num=6):
+    params_list = []
+    for _ in range(layer_num):
+        params_list.append(params) 
+    return params_list
+
+def silence_output(func):
+    def wrapper(*args, **kwargs):
+        original_stdout = sys.stdout
+        sys.stdout = io.StringIO()
+        try:
+            result = func(*args, **kwargs)
+        finally:
+            sys.stdout = original_stdout
+        return result
+    return wrapper
     
 class ListLoss:
     def __init__(self):
@@ -107,42 +138,57 @@ class BatchNormNd(nn.Module):
 
 class MultiPropDecoder(nn.Module):
     def __init__(self, 
-        feature_dim = 1024,
-        hidden_dim = 1024,
+        feature_dim = (1024, 12288),
+        hidden_dim = 12288,
         dropout_rate = 0.1, 
         output_dim = 1,
-        projector = "SiLU",
+        activation = "SiLU",
         projection_transform = 'Sigmoid',
         linear_projection = False
     ):
         super(MultiPropDecoder, self).__init__()
-        self.concentrate = nn.Sequential(
-            nn.Linear(feature_dim, feature_dim, bias=True),
-            activation_dict['LeakyReLU'],
-            BatchNormNd(feature_dim),
-            nn.Linear(feature_dim, feature_dim, bias=True),
+        self.dense_concentrate = nn.Sequential(
+            nn.Dropout(p=dropout_rate),
+            nn.Linear(feature_dim[0], hidden_dim, bias=True),
+            activation_dict[activation],
+            BatchNormNd(hidden_dim),
+            nn.Linear(hidden_dim, hidden_dim, bias=True),
+        )
+        self.scattered_concentrate = nn.Sequential(
+            nn.Dropout(p=dropout_rate),
+            nn.Linear(feature_dim[1], feature_dim[1], bias=True),
+            activation_dict[activation],
+            BatchNormNd(feature_dim[1]),
+            nn.Linear(feature_dim[1], hidden_dim, bias=True),
         )
         self.projection = nn.Sequential(
-            nn.Dropout(p=dropout_rate),
-            nn.Linear(feature_dim, feature_dim, bias=True),
-            BatchNormNd(feature_dim),
-            activation_dict[projector],
-            nn.Linear(feature_dim, hidden_dim, bias=True),
-            BatchNormNd(hidden_dim),
-            activation_dict[projector],
-            nn.Linear(hidden_dim, hidden_dim, bias=True),
-            activation_dict[projector],
-            nn.Linear(hidden_dim, output_dim, bias=True),
+            nn.Linear(hidden_dim + feature_dim[0], 1024, bias=True),
+            BatchNormNd(1024),
+            activation_dict[activation],
+            nn.Linear(1024, 1024, bias=True),
+            BatchNormNd(1024),
+            activation_dict[activation],
+            nn.Linear(1024, 1024, bias=True),
+            activation_dict[activation],
+            nn.Linear(1024, output_dim, bias=True),
             activation_dict[projection_transform],
             nn.Linear(output_dim, output_dim) if linear_projection else nn.Identity(),
         )
-        self.concentrate.cuda()
+        self.dense_concentrate.cuda()
+        self.scattered_concentrate.cuda()
         self.projection.cuda()
     
     @torch.compile
-    def forward(self, features):
-        concentrated_features = self.concentrate(features)
-        return self.projection(concentrated_features + features)
+    def forward(self, features, projected_feats):
+        concentrate_features = self.dense_concentrate(features) + self.scattered_concentrate(projected_feats)
+        return self.projection(
+            torch.cat(
+                (
+                    concentrate_features, 
+                    features
+                ), dim = -1
+            )
+        )
 
 
 

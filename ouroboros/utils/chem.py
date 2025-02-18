@@ -29,7 +29,7 @@ def is_valid_smiles(smiles):
     except TypeError:
         raise TypeError(f"{smiles} caused TypeError.")
     if mol is None:
-            return False
+        return False
     return True
 
 def check_smiles_validity(smiles):

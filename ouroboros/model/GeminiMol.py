@@ -7,7 +7,7 @@ import pandas as pd
 from dgl import batch, unbatch
 from dgllife.utils import atom_type_one_hot, atom_formal_charge, atom_hybridization_one_hot, atom_chiral_tag_one_hot, atom_is_in_ring, atom_is_aromatic, ConcatFeaturizer, BaseAtomFeaturizer, CanonicalBondFeaturizer, smiles_to_bigraph
 from dgl.nn.pytorch.glob import GlobalAttentionPooling
-from dgllife.model.readout.mlp_readout import MLPNodeReadout
+from dgl.nn import SetTransformerEncoder
 from dgllife.model.gnn.wln import WLN
 from .modules import (
     activation_dict
@@ -35,7 +35,8 @@ class MolecularEncoder(nn.Module):
         num_features = 1024,
         num_layers = 4,
         cache = False,
-        graph_library = {}
+        graph_library = {},
+        threads = 40
     ):
         super().__init__()
         
@@ -63,35 +64,46 @@ class MolecularEncoder(nn.Module):
         self.OBEncoder.to('cuda')
         self.cache = cache
         self.graph_library = graph_library
-        self.graph_dict = self.graph_library
+        self.threads = threads
+
+    def update_graph(self, smiles):
+        self.graph_library[smiles] = smiles_to_bigraph(
+            smiles, 
+            node_featurizer=self.atom_featurizer, 
+            edge_featurizer=self.bond_featurizer
+        )
 
     def make_graph(self, smiles):
-        if smiles not in self.graph_dict.keys():
-            self.graph_dict[smiles] = smiles_to_bigraph(
-                smiles, 
-                node_featurizer=self.atom_featurizer, 
-                edge_featurizer=self.bond_featurizer
-            )
+        if self.cache:
+            if smiles not in self.graph_library.keys():
+                self.graph_library[smiles] = smiles_to_bigraph(
+                    smiles, 
+                    node_featurizer=self.atom_featurizer, 
+                    edge_featurizer=self.bond_featurizer
+                )
+            return self.graph_library[smiles]
+        else:
+            if smiles in self.graph_library.keys():
+                return self.graph_library[smiles]
+            else:
+                return smiles_to_bigraph(
+                    smiles, 
+                    node_featurizer=self.atom_featurizer,
+                    edge_featurizer=self.bond_featurizer
+                )
 
     def update_library(self, smiles_list):
-        with concurrent.futures.ThreadPoolExecutor(max_workers=23) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=self.threads) as executor:
             futures = []
             for smiles in smiles_list:
-                    futures.append(executor.submit(self.make_graph, smiles))
+                futures.append(executor.submit(self.update_graph, smiles))
             for _ in concurrent.futures.as_completed(futures):
                 pass
-        self.graph_library = self.graph_dict
 
-    def smiles2graph(self, input_sents):
-        with concurrent.futures.ThreadPoolExecutor(max_workers=23) as executor:
-            futures = []
-            for smiles in input_sents:
-                    futures.append(executor.submit(self.make_graph, smiles))
-            for _ in concurrent.futures.as_completed(futures):
-                pass
-        input_tensor = batch([self.graph_dict[smiles] for smiles in input_sents]).to('cuda')
-        if not self.cache:
-            self.graph_dict = self.graph_library
+    def smiles2graph(self, smiles_list):
+        with concurrent.futures.ThreadPoolExecutor(max_workers=self.threads) as executor:
+            graphs = list(executor.map(self.make_graph, smiles_list))
+        input_tensor = batch(graphs).to('cuda')
         return input_tensor
 
     def forward(self, smiles_list):
@@ -111,29 +123,42 @@ class MolecularPooling(nn.Module):
     ):
         super(MolecularPooling, self).__init__()
         self.projector = projector
-        if projector == 'Mean':
-            self.readout = MLPNodeReadout(
-                num_features, num_features, num_features,
-                activation=activation_dict['Sigmoid'],
-                mode='mean'
+        activation = 'ReLU' if projector == 'SeT' else projector
+        gate_nn = nn.Sequential(
+            nn.Linear(num_features, num_features * 3),
+            nn.BatchNorm1d(num_features * 3),
+            activation_dict[activation],
+            nn.Linear(num_features * 3, 1024),
+            nn.BatchNorm1d(1024),
+            activation_dict[activation],
+            nn.Linear(1024, 128),
+            activation_dict[activation],
+            nn.Linear(128, 128),
+            activation_dict[activation],
+            nn.Linear(128, 128),
+            activation_dict[activation],
+            nn.Linear(128, 1),
+            nn.Sigmoid()
+        )
+        if projector == 'SeT':
+            self.attention = SetTransformerEncoder(
+                d_model = num_features,
+                n_heads = 32,
+                d_head = 256,
+                d_ff = num_features * 4,
+                n_layers = 2,
+                block_type = 'sab',
+                m = None,
+                dropouth = 0.3,
+                dropouta = 0.3
+            )
+            self.attention.to('cuda')
+            self.readout = GlobalAttentionPooling(
+                gate_nn = torch.compile(gate_nn),
+                # Adding feat_nn reduces the representation learning capability, /
+                # with a significant performance degradation on the zero-shot task
             )
         else:
-            gate_nn = nn.Sequential(
-                nn.Linear(num_features, num_features * 3),
-                nn.BatchNorm1d(num_features * 3),
-                activation_dict[projector],
-                nn.Linear(num_features * 3, 1024),
-                nn.BatchNorm1d(1024),
-                activation_dict[projector],
-                nn.Linear(1024, 128),
-                activation_dict[projector],
-                nn.Linear(128, 128),
-                activation_dict[projector],
-                nn.Linear(128, 128),
-                activation_dict[projector],
-                nn.Linear(128, 1),
-                nn.Sigmoid()
-            )
             # init the readout and output layers
             self.readout = GlobalAttentionPooling(
                 gate_nn = torch.compile(gate_nn),
@@ -143,15 +168,16 @@ class MolecularPooling(nn.Module):
         self.readout.cuda()
     
     def forward(self, mol_graph, get_atom_weights = False):
-        if self.projector != 'Mean':
-            encoding, atom_weights = self.readout(
+        if self.projector == 'SeT':
+            mol_graph.ndata['atom_type'] = self.attention(
                 mol_graph, 
-                mol_graph.ndata['atom_type'], 
-                get_attention = True
+                mol_graph.ndata['atom_type']
             )
-        else:
-            encoding = self.readout(mol_graph, mol_graph.ndata['atom_type'])
-            atom_weights = None
+        encoding, atom_weights = self.readout(
+            mol_graph, 
+            mol_graph.ndata['atom_type'], 
+            get_attention = True
+        )
         if get_atom_weights:
             return encoding, atom_weights
         else:
@@ -169,7 +195,8 @@ class GeminiMol(nn.Module):
         pooling_params = {
             "projector": "LeakyReLU",
         },
-        cache = False
+        cache = False,
+        threads = 40
     ):
         # basic setting
         torch.set_float32_matmul_precision('high')
@@ -184,7 +211,8 @@ class GeminiMol(nn.Module):
             self.Encoder = MolecularEncoder(
                 num_layers = self.encoder_params['num_layers'],
                 num_features = self.encoder_params['encoding_features'],
-                cache = cache
+                cache = cache,
+                threads = threads
             )
             self.Encoder.load_state_dict(torch.load(f'{model_path}/MolEncoder.pt'))
         else:
@@ -196,7 +224,8 @@ class GeminiMol(nn.Module):
             self.Encoder = MolecularEncoder(
                 num_layers = encoder_params['num_layers'],
                 num_features = encoder_params['encoding_features'],
-                cache = cache
+                cache = cache,
+                threads = threads
             )
         if os.path.exists(f'{model_path}/Pooling.pt'):
             self.pooling_params = json.load(open(f'{model_path}/pooling_config.json', 'r'))
@@ -311,119 +340,14 @@ class GeminiMol(nn.Module):
     ):
         return torch.nn.functional.cosine_similarity(features, ref_features, dim=-1)
 
-    def predict_similarity(
-            self, 
-            smiles1_list, 
-            smiles2_list,
-            as_pandas = True, 
-            similarity_metrics = ['Pearson']
-            ):
-        self.eval()
-        assert len(smiles1_list) == len(smiles2_list), f'Error: smiles list must be same length.'
-        with torch.no_grad():
-            pred_values = {key:[] for key in similarity_metrics}
-            for i in range(0, len(smiles1_list), self.batch_size):
-                sent1 = smiles1_list[i:i+self.batch_size]
-                sent2 = smiles2_list[i:i+self.batch_size]
-                # Concatenate input sentences
-                input_sents = sent1 + sent2
-                features = self.encode(input_sents)
-                for label_name in similarity_metrics:
-                    pred = self.decode(features, label_name)
-                    pred_values[label_name] += list(pred.cpu().detach().numpy())
-            if as_pandas == True:
-                res_df = pd.DataFrame(pred_values)
-                return res_df
-            else:
-                return pred_values
-
-    def create_database(
-            self, 
-            query_smiles_table, 
-            smiles_column='smiles', 
-            worker_num=1
-        ):
-        data = query_smiles_table[smiles_column].tolist()
-        query_smiles_table['features'] = None
-        with torch.no_grad():
-            for i in tqdm(range(0, len(data), 2*worker_num*self.batch_size), desc = 'Encoding'):
-                smiles_list = data[i:i+2*worker_num*self.batch_size]
-                features = self.encode(smiles_list)
-                features_list = list(features.cpu().detach().numpy())
-                for j in range(len(features_list)):
-                    query_smiles_table.at[i+j, 'features'] = features_list[j]
-        return query_smiles_table
-
-    def database_screening(
-            self, 
-            shape_database, 
-            ref_smiles, 
-            as_pandas = True, 
-            similarity_metrics=['Pearson'], 
-            worker_num=1
-        ):
-        torch.set_float32_matmul_precision('high')
-        features_list = shape_database['features'].tolist()
-        with torch.no_grad():
-            pred_values = {key:[] for key in similarity_metrics}
-            ref_features = self.encode([ref_smiles]).cuda()
-            for i in range(0, len(features_list), worker_num*self.batch_size):
-                features_batch = features_list[i:i+worker_num*self.batch_size]
-                query_features = torch.from_numpy(np.array(features_batch)).cuda()
-                features = torch.cat((
-                    query_features, 
-                    ref_features.repeat(len(features_batch), 1)
-                ), dim=0)
-                for label_name in similarity_metrics:
-                    pred = self.decode(features, label_name)
-                    pred_values[label_name] += list(pred.cpu().detach().numpy())
-            if as_pandas == True:
-                res_df = pd.DataFrame(pred_values, columns=similarity_metrics)
-                return res_df
-            else:
-                return pred_values 
-
-    def virtual_screening(
-            self, 
-            ref_smiles_list, 
-            query_smiles_table, 
-            input_with_features = False,
-            smiles_column = 'smiles', 
-            return_all_col = True,
-            similarity_metrics = None, 
-            worker_num = 1
-        ):
-        if input_with_features:
-            features_database = query_smiles_table
-        else:
-            features_database = self.create_database(
-                query_smiles_table, 
-                smiles_column = smiles_column, 
-                worker_num = worker_num
-            )
-        total_res = pd.DataFrame()
-        for ref_smiles in ref_smiles_list:
-            query_scores = self.database_screening(
-                features_database, 
-                ref_smiles, 
-                as_pandas=True, 
-                similarity_metrics=similarity_metrics
-            )
-            assert len(query_scores) == len(query_smiles_table), f"Error: different length between original dataframe with predicted scores! {ref_smiles}"
-            if return_all_col:
-                total_res = pd.concat([total_res, query_smiles_table.join(query_scores, how='left')], ignore_index=True)
-            else:
-                total_res = pd.concat([total_res, query_smiles_table[[smiles_column]].join(query_scores, how='left')], ignore_index=True)
-        return total_res
-
     '''
     This method is employed to extract pre-trained GeminiMol encodings from raw molecular SMILES representations.
     query_smiles_table: pd.DataFrame
     '''
-    def extract_features(self, query_smiles_table, smiles_column='smiles'):
+    def extract_features(self, query_smiles_table, smiles_column='smiles', prefix='GM_'):
         shape_features = self.extract(
             query_smiles_table, 
             smiles_column, 
             as_pandas=False, 
         )
-        return pd.DataFrame(shape_features).add_prefix('GM_')
+        return pd.DataFrame(shape_features).add_prefix(prefix)

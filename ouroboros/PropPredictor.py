@@ -17,6 +17,7 @@ if __name__ == "__main__":
         model_name = model_name, 
         batch_size = 512,
         predictor_info = {predictor: 1.0 for predictor in predictor_list},
+        generator = False
     )
     ## prepare
     extrnal_data = prepare(extrnal_data, smiles_column = smiles_col, standardize = False)
