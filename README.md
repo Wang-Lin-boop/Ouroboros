@@ -12,7 +12,7 @@ This repository provides the official implementation of the Ouroboros model and 
 
 ## 💗 Motivation  
 
-Artificial neural networks have rapidly advanced representation learning and generative modeling in molecular pharmaceutics. However, a gap persists between the representation learning and molecular generation, hindering the application of AI and deep-learning techniques in drug discovery. We introduce Ouroboros, a unified framework that seamlessly integrates representation learning with molecular generation and therefore **allows efficient chemical space exploration through pre-trained molecular encodings**. By reframing the directed chemical evolution as a process of encoding space compression and decompression, the strategy overcomes the challenges associated with iterative molecular optimization, enabling optimal molecular optimization directly within the encoding space.    
+Ouroboros is an unified framework that seamlessly integrates representation learning with molecular generation and therefore **allows efficient chemical space exploration through pre-trained molecular encodings**. By reframing the directed chemical evolution as a process of encoding space compression and decompression, the strategy overcomes the challenges associated with iterative molecular optimization, enabling optimal molecular optimization directly within the encoding space.    
 
 ## 💡 Highlight
 
