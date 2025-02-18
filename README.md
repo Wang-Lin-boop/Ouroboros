@@ -104,7 +104,7 @@ In this GitHub repository, we update the latest version of the code and models f
 
 ## 📓 Application
 
-Ouroboros provides a unified framework that seamlessly integrates representation learning with molecular generation, which allows us to use Ouroboros as a **molecular representation** model to perform virtual screening, molecular property modeling, molecular clustering, molecular feature visualization, and other uses as a **molecular generation** model to chemical evolution, fusion and exploration.  
+Ouroboros provides a unified framework that seamlessly integrates representation learning with molecular generation, which allows us to use Ouroboros as a **molecular representation** model to perform ligand-based virtual screening and molecular property modeling, and other uses as a **molecular generation** model to directed chemical evolution.   
 
 <details>
 <summary>Virtual Screening</summary>
@@ -314,6 +314,8 @@ By default, chemical fusion only supports fusion between 2 groups of molecules. 
 
 <br>
 </details>   
+
+Besides to the functions mentioned in the tutorial above, you can also use various methods provided in `Ouroboros.py` to perform analysis, including *feature extraction, clustering, dimensionality reduction, and visualization* of molecular encoding, analyzing the *feature distribution* of molecules in molecular datasets, visualizing *molecular similarity matrices*, and visualizing the *attention weights of each atom in molecules*.      
 
 ## 😫 Limitations and Prospective
 
