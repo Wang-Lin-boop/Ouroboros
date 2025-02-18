@@ -83,7 +83,6 @@ pip install dgllife
 
 pip install torchtriton --extra-index-url "https://download.pytorch.org/whl/nightly/cu121"
 ```
-<br>
 </details>
 
 <details>
@@ -99,7 +98,6 @@ We provide three different versions of the model, all of them trained based on t
 ```
 In this GitHub repository, we update the latest version of the code and models for Ouroboros (they usually have better performance). If your goal is only to reproduce the results in the article, please use the original model and source code provided on [ZhangLab WebPage](https://zhanglab.comp.nus.edu.sg/Ouroboros/), or use the 0.1.0 release of the repository. If the current version does not meet the demands of your drug discovery program, feel free to contact [us](Wanglin1102@outlook.com) to try our in-house version.         
 
-<br>
 </details>   
 
 ## 📓 Application
