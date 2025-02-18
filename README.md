@@ -37,18 +37,12 @@ Artificial neural networks have rapidly advanced representation learning and gen
 * The Ouroboros framework can **accommodate other molecular representation learning strategies (chemicals vs multi-omics, phenotype)** to hold more information in the encoding space.       
 * Predictive models of protein-ligand recognition, durg-target affinity or other chemical propteries trained using Ouroboros will be promising for target-based molecule generation.      
 
-## 😫 Limitations
-
-* Ouroboro is not a model trained on a large-scale dataset, and you can expect **scaling up** to improve its performance.       
-* Reconstruction of the 1D Vector to a chemical structure is challenging and **100% reconstruction** has not yet been achieved.        
-
 ## 📕 Installation
 
-To set up the Ouroboros model, we recommend using conda for Python environment configuration.   
-If you encounter any problems with the installation, please feel free to post an issue or discussion it.    
+To set up the Ouroboros model, we recommend using conda for Python environment configuration. If you encounter any problems with the installation, please feel free to post an issue or discussion it.    
 
 <details>
-<summary>Environment Setup</summary>
+<summary>(←🖱️) Environment Setup</summary>
 <br>
 
 > Installing MiniConda (skip if conda was installed)   
@@ -112,6 +106,146 @@ In this GitHub repository, we update the latest version of the code and models f
 
 <br>
 </details>   
+
+## 📓 Application
+
+Ouroboros provides a unified framework that seamlessly integrates representation learning with molecular generation, which allows us to use Ouroboros as a **molecular representation** model to perform virtual screening, molecular property modeling, molecular clustering, molecular feature visualization, and other uses as a **molecular generation** model to chemical evolution, fusion and exploration.  
+
+<details>
+<summary>Virtual Screening</summary>
+<br>
+
+In concept, molecules share similar conformational space also share similar biological activities, allowing us to predict the similarity of biological activities between molecules by comparing the similarity of Ouroboros encodings.     
+
+Here, we introduce the ``PharmProfiler.py``, an approach that employs the Ouroboros encoding to establish pharmacological profiles and facilitate the search for molecules with specific properties in chemical space. ``PharmProfiler.py`` offers the capability to conduct ligand-based virtual screening using commercially available compound libraries. Furthermore, it enables target identification through ligand similarity analysis by leveraging comprehensive drug-target relationship databases.    
+
+To support experimentation, we have included a collection of diverse commercial compound libraries and drug-target relationship databases, conveniently located in the `${ouroboros_dataset}/` directory.     
+
+> 1. Prepare the pharmacological profile and compound libraries
+
+To define a pharmacological profile, you will need to input a `profile.csv` file, which should have the following format:   
+
+``` 
+SMILES,Label
+C=CC(=O)N[C@@H]1CN(c2nc(Nc3cn(C)nc3OC)c3ncn(C)c3n2)C[C@H]1F,1.0
+C=CC(=O)Nc1cccc(Nc2nc(Nc3ccc(N4CCN(C(C)=O)CC4)cc3OC)ncc2C(F)(F)F)c1,1.0
+C#Cc1cccc(Nc2ncnc3cc(OCCOC)c(OCCOC)cc23)c1,1.0
+COC(=O)CCC/N=C1\SCCN1Cc1ccccc1,0.4
+C=C(C)[C@@H]1C[C@@H](CC2(CC=C(C)C)C(=O)C(C(CC(=O)O)c3ccccc3)=C3O[C@@H](C)[C@@H](C)C(=O)C3=C2O)C1(C)C,-0.8
+C/C(=C\c1ncccc1C)[C@@H]1C[C@@H]2O[C@]2(C)CCC[C@H](C)[C@H](O)[C@@H](C)C(=O)C(C)(C)[C@@H](O)CC(=O)O1,-0.5
+```
+
+The "Label" column signifies the weight assigned to the reference compound. Positive values indicate that the selected compounds should bear resemblance to the reference compound, while negative values imply that the selected compounds should be dissimilar to the reference compound. Typically, positive values are assigned to **active** compounds, whereas negative values are assigned to **inactive** compounds or those causing **side effects**.   
+
+```
+ID,SMILES,Target
+CHEMBL3984086,C[C@@]1(N2CCc3c(-c4cnc(N)nc4)nc(N4CCOCC4)nc32)CCN(S(C)(=O)=O)C1,PI3Ka
+CHEMBL1236962,COc1ncc(-c2ccc3nccc(-c4ccnnc4)c3c2)cc1NS(=O)(=O)c1ccc(F)cc1F,PI3Ka
+CHEMBL3586672,CCCOCCNC(=O)Nc1nc2c(s1)CN(c1cncc(OC)c1)CC2,PI3Kg
+CHEMBL1236962,COc1ncc(-c2ccc3nccc(-c4ccnnc4)c3c2)cc1NS(=O)(=O)c1ccc(F)cc1F,PI3Kg
+ALISERTIB,COc1cc(Nc2ncc3c(n2)-c2ccc(Cl)cc2C(c2c(F)cccc2OC)=NC3)ccc1C(=O)[O-],AURKA
+AT-9283,O=C(Nc1c[nH]nc1-c1nc2cc(CN3CCOCC3)ccc2[nH]1)NC1CC1,AURKA
+ENMD-2076,Cc1cc(Nc2cc(N3CC[NH+](C)CC3)nc(/C=C/c3ccccc3)n2)n[nH]1,AURKA
+CHEMBL379975,O=C1NC(=O)c2c1c(-c1ccccc1Cl)cc1[nH]c3ccc(O)cc3c21,WEE1
+CHEMBL49120,CC[NH+](CC)CCOc1ccc(Nc2ncc3cc(-c4c(Cl)cccc4Cl)c(=O)n(C)c3n2)cc1,WEE1
+```
+
+Besides explicitly specifying weights, we can also **group SMILES by Target**, at which point Ouroboros calculates the similarity of each group separately and weights the sum (default weight is 1, unless you specify an additional weight column).
+
+The compound libraries are also stored in CSV format in the `${ouroboros_dataset}/` directory. It is requried to maintain consistency between the SMILES column name in the `profile.csv` file and the compound library.    
+
+> 2. Perform the PharmProfiler
+
+To perform virtual screening, the following command can be used.   
+
+Here, `profile_set` represents the provided pharmacological profile by the user, `keep_top` indicates the number of compounds to be outputted in the end, and `probe_cluster` determines whether compounds with the same weight should be treated as a cluster. Compounds within the same cluster will be compared individually with the query mol, and the highest similarity score will be taken as the score of query mol.   
+
+We have provided a processed version of the commercial compound library at the `${ouroboros_dataset}/commercial.csv`, which contained 19,116,695 purchasable compounds. To perform target identification, the compound library can be replaced with the `${ouroboros_dataset}/DTIDB.csv`, which contains drug-target relationships. This is a processed version of the BindingDB database, which contains 2,159,221 target-ligand paris.      
+
+``` shell
+export ouroboros_model="Ouroboro_M0"
+export job_name="Virtual_Screening"
+export profile_set="profile.csv" # SMILES (same to compound library) and Label/Target/Weight
+export label_col="Target" # weights for profiles
+export compound_library="${ouroboros_dataset}/commercial.csv" 
+export smiles_column="SMILES" # Specify the column name in the compound_library
+export keep_top=1000
+export probe_cluster="Yes"
+export flooding=0.5
+python -u ${ouroboros_app}/PharmProfiler.py "${ouroboros_lib}/${ouroboros_model}" "${job_name}" "${smiles_column}" "${compound_library}" "${profile_set}" "${weight_column}" "${probe_cluster}" "${flooding}" "${keep_top}" 
+```
+
+After the initial run of PharmProfiler, a extracted feature database will be generated in the model. Subsequent screening tasks on the same compound library can benefit from PharmProfiler automatically reading the feature file, which helps to accelerate the running speed.    
+
+<br>
+</details>   
+
+<details>
+<summary>Molecular Proptery Modeling</summary>
+<br>
+
+> 1. Molecular Property Datasets
+
+Before molecular property modeling, it is crucial to carefully prepare your data, which includes compound structure pre-processing and dataset splitting. Firstly, you need to clarify the chirality and protonation states of molecules in the dataset, which can be done using chemical informatics tools such as RDKit or Schrödinger software package. 
+
+The processed data should be saved in CSV file format, containing at least one column for **`SMILES`** and one column for **`Labels`**. Subsequently, utilize the following command for scaffold partition. By default, 70% of the dataset is used for training (10% of training for validation) and 30% for test.     
+
+``` shell
+export smiles_column="SMILES" # Specify the column name in datasets
+export label_column="Label" # Specify the column name in datasets
+export dataset="${ouroboros_dataset}/data.csv"
+export dataset_bp=${dataset##*/}
+for method in "skeleton" "CombineFP" "MACCS" "ECFP4:AtomPairs";do # how to define scaffold
+export dataset_name=${dataset_bp%%.csv}_${method}
+python -u ${ouroboros_app}/utils/advanced_partition.py ${dataset} ${dataset_name} ${smiles_column} ${label_column} 0.3 0.1 "${method}"
+done
+```
+
+We provide two main approaches for partitioning the dataset, which include skeleton based one and fingerprint clustering based one. Here, `Birch` is default clustering algorithm, you can use `:` splitting to specify multiple molecular fingerprints.    
+
+Please keep your dataset partition safe, it is important to reproduce previous results. Usually, you can save it into the `${ouroboros_dataset}`.    
+
+> 2. Molecular Property Predictive Model
+
+Hyperparameter tuning is important for most molecular property modeling tasks. Here we provide a `PropModeling.py` for molecular property modeling where the hyperparameter settings seem to work well on most tasks. Of course, if further performance improvements are desired, then changing the script to find better hyperparameters is necessary.   
+
+``` shell
+export ouroboros_model="Ouroboro_M0"
+export dataset_prefix="${ouroboros_dataset}/Your_Dataset/Your_Dataset" # Specify a path and file prefix to your datasets (train, valid, and test)
+export smiles_column="SMILES" # Specify the column name in datasets
+export label_column="Label" # Specify the column name in datasets
+export metric="SPEARMANR" # Specify the validation metric
+export job_name=${dataset_prefix##*/}_${ouroboros_model##*/}
+python -u ${ouroboros_app}/PropModeling.py ${dataset_prefix} "${ouroboros_models}/${ouroboros_model}" "${smiles_column}" "${label_column}:${metric}" ${dataset_prefix##*/}
+```
+
+The model appears under the `${ouroboros_model}/` path at the end of the job run, at which point it is ready to be applied in molecule generation or virtual screening. Furthermore, for some small molecular datasets, you can use `PropPredictor.py` to directly predict their molecular properties.    
+
+``` shell
+export ouroboros_model="Ouroboro_M0"
+export dataset="dataset.csv" # Specify a path to your datasets
+export smiles_column="SMILES" # Specify the column name in datasets
+python -u ${ouroboros_app}/PropPredictor.py ${ouroboros_model} "${smiles_column}" "${dataset}"
+```
+
+This will apply all available molecular property predictors in `${ouroboros_model}` for the `${smiles_column}` of `${dataset}`, resulting in a blanket prediction. If you are a cloud service provider, be aware of potential leakage risks in your deployment.   
+
+<br>
+</details>   
+
+<details>
+<summary>Chemical Evolution (Molecular Generation)</summary>
+<br>
+
+We propose three distinct chemical evolution strategies: **chemical exploration**, which starts from a single molecule to explore unknown chemical space; **chemical migration**, which facilitates the transformation from a starting molecule to a target molecule; and **chemical fusion**, which integrates multiple probe molecules.   
+
+<br>
+</details>   
+
+## 😫 Limitations
+
+* Ouroboro is not a model trained on a large-scale dataset, and you can expect **scaling up** to improve its performance.       
+* Reconstruction of the 1D Vector to a chemical structure is challenging and **100% reconstruction** has not yet been achieved.        
 
 ## ⭐ Citing This Work
 

@@ -79,11 +79,11 @@ class Ouroboros(GeminiMol):
             self.Generator.load_state_dict(torch.load(f'{self.model_path}/Generator.pt'))
             self.Generator.cuda()
             self.Generator.eval()
+        self.Predictor_Info = {}
+        self.Predictor_Labels = []
         if len(list(predictor_info.keys())) > 0:
             self.projector = nn.ModuleDict()
             self.Predictor = nn.ModuleDict()
-            self.Predictor_Info = {}
-            self.Predictor_Labels = []
             for name in list(predictor_info.keys()):
                 self.load_predictor(
                     predictor_name = name
@@ -477,28 +477,27 @@ class Ouroboros(GeminiMol):
                 worker_num = worker_num
             )
         properties_names = []
-        if properties_prediction:
+        if properties_prediction and len(self.Predictor_Info) > 0:
             with torch.no_grad():
-                if len(self.Predictor_Info) != 0:
-                    properties_list = []
-                    features_list = features_database['features'].tolist()
-                    for predictor_name in self.Predictor_Info.keys():
-                        label_list = list(self.Predictor_Info[predictor_name]['label_dict'].keys())
-                        if len(label_list) == 1:
-                            label_list = [predictor_name]
-                        pred_values = {key:[] for key in label_list}
-                        for i in range(0, len(features_list), worker_num*self.batch_size):
-                            features_batch = features_list[i:i+worker_num*self.batch_size]
-                            features = torch.from_numpy(np.array(features_batch)).cuda()
-                            projected_feats = self.projector[predictor_name](features)
-                            pred = self.Predictor[predictor_name](
-                                features, projected_feats
-                            ).cpu().detach().numpy()
-                            for k in range(len(label_list)):
-                                pred_values[label_list[k]] += list(pred[:, k])
-                        properties_list.append(pd.DataFrame(pred_values, columns=label_list))
-                        properties_names += label_list
-                    features_database = features_database.join(pd.concat(properties_list, axis=1), how='left')
+                properties_list = []
+                features_list = features_database['features'].tolist()
+                for predictor_name in self.Predictor_Info.keys():
+                    label_list = list(self.Predictor_Info[predictor_name]['label_dict'].keys())
+                    if len(label_list) == 1:
+                        label_list = [predictor_name]
+                    pred_values = {key:[] for key in label_list}
+                    for i in range(0, len(features_list), worker_num*self.batch_size):
+                        features_batch = features_list[i:i+worker_num*self.batch_size]
+                        features = torch.from_numpy(np.array(features_batch)).cuda()
+                        projected_feats = self.projector[predictor_name](features)
+                        pred = self.Predictor[predictor_name](
+                            features, projected_feats
+                        ).cpu().detach().numpy()
+                        for k in range(len(label_list)):
+                            pred_values[label_list[k]] += list(pred[:, k])
+                    properties_list.append(pd.DataFrame(pred_values, columns=label_list))
+                    properties_names += label_list
+                features_database = features_database.join(pd.concat(properties_list, axis=1), how='left')
             if len(ref_smiles_list) == 0:
                 total_res = features_database
                 del total_res['features']
