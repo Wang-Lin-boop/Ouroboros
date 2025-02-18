@@ -172,7 +172,6 @@ python -u ${ouroboros_app}/PharmProfiler.py "${ouroboros_lib}/${ouroboros_model}
 
 After the initial run of PharmProfiler, a extracted feature database `xxx.pkl` will be generated in `${ouroboros_model}`. Subsequent screening tasks on the same compound library can benefit from PharmProfiler automatically reading the feature file, which helps to accelerate the running speed.    
 
-<br>
 </details>   
 
 <details>
@@ -228,7 +227,6 @@ python -u ${ouroboros_app}/PropPredictor.py ${ouroboros_model} "${smiles_column}
 
 This will apply all available molecular property predictors in `${ouroboros_model}` for the `${smiles_column}` of `${dataset}`, resulting in a blanket prediction. If you are a cloud service provider, be aware of potential leakage risks in your deployment.   
 
-<br>
 </details>   
 
 <details>
@@ -312,7 +310,6 @@ python -u ${ouroboros_app}/ChemicalFusion.py "${probe_datasets}@${fusion_targets
 
 By default, chemical fusion only supports fusion between 2 groups of molecules. If you need to fuse multiple groups of molecules, you can achieve this by modifying the `ChemicalFusion.py`.    
 
-<br>
 </details>   
 
 Besides to the functions mentioned in the tutorial above, you can also use various methods provided in `Ouroboros.py` to perform analysis, including *feature extraction, clustering, dimensionality reduction, and visualization* of molecular encoding, analyzing the *feature distribution* of molecules in molecular datasets, visualizing *molecular similarity matrices*, and visualizing the *attention weights of each atom in molecules*.      
