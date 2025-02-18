@@ -30,12 +30,7 @@ Artificial neural networks have rapidly advanced representation learning and gen
 **Chemical Foundational Model:**
 
 * Ouroboros not only provides **molecule-to-encoding** transformation, but also **encoding-to-molecule** reconstruction.     
-* You can practice **directed chemical evolution on any downstream model built on Ouroboros**.     
-
-**Prospective:**
-
-* The Ouroboros framework can **accommodate other molecular representation learning strategies (chemicals vs multi-omics, phenotype)** to hold more information in the encoding space.       
-* Predictive models of protein-ligand recognition, durg-target affinity or other chemical propteries trained using Ouroboros will be promising for target-based molecule generation.      
+* You can practice **directed chemical evolution on any downstream model built on Ouroboros**.      
 
 ## 📕 Installation
 
@@ -242,10 +237,17 @@ We propose three distinct chemical evolution strategies: **chemical exploration*
 <br>
 </details>   
 
-## 😫 Limitations
+## 😫 Limitations and Prospective
+
+**Limitations:**
 
 * Ouroboro is not a model trained on a large-scale dataset, and you can expect **scaling up** to improve its performance.       
 * Reconstruction of the 1D Vector to a chemical structure is challenging and **100% reconstruction** has not yet been achieved.        
+
+**Prospective:**
+
+* The Ouroboros framework can **accommodate other molecular representation learning strategies (chemicals vs multi-omics, phenotype)** to hold more information in the encoding space.       
+* Predictive models of protein-ligand recognition, durg-target affinity or other chemical propteries trained using Ouroboros will be promising for target-based molecule generation.     
 
 ## ⭐ Citing This Work
 
