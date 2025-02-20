@@ -208,9 +208,6 @@ class Ouroboros(GeminiMol):
         dim_num = 2, 
         plot_dim = [0, 1]
     ):
-        dataset = self.prepare(
-            dataset, smiles_column = smiles_column
-        )
         label_series = dataset[label_column]
         features_dataset = self.extract(
             dataset,
@@ -219,9 +216,9 @@ class Ouroboros(GeminiMol):
         if concise:
             std_values = features_dataset.std()
             std_top = std_values.sort_values(
-                ascending=False
-                )[:max(len(features_dataset.columns)//10, concise_max_feat)].index.to_list()
-            features_dataset = dataset[std_top]
+                ascending = False
+            )[:max(len(features_dataset.columns)//10, concise_max_feat)].index.to_list()
+            features_dataset = features_dataset[std_top]
         plt.figure(figsize=(4.5, 4.5), dpi=600)
         if output_fn is None:
             output_fn = f"{self.model_name}_{method}"
@@ -233,14 +230,16 @@ class Ouroboros(GeminiMol):
             label_set = sorted(list(set(label_series.to_list())))
             colors = plt.cm.rainbow(np.linspace(0.15, 0.85, len(label_set)))
         else:
-            label_set = [label[0] for label in sorted(label_series.value_counts().to_dict().items(), key=lambda x: x[1], reverse=True)]
+            label_set = [label[0] for label in sorted(
+                label_series.value_counts().to_dict().items(), key=lambda x: x[1], reverse=True
+            )]
             colors = plt.cm.rainbow(np.linspace(0.15, 0.85, len(label_set)))
         color_id = 0
         for label in label_set:
             idx = (label_series.to_numpy() == label).nonzero()
             plt.scatter(X_embedded[idx, plot_dim[0]], X_embedded[idx, plot_dim[1]], c=colors[color_id], label=f'label={label}', marker = '.', s=point_size)
             color_id += 1
-        if len(label_set) <= 6:
+        if len(label_set) <= 10:
             plt.legend(loc='best')
         plt.title(f"{output_fn}")
         plt.tight_layout()
@@ -257,9 +256,6 @@ class Ouroboros(GeminiMol):
         algorithm = 'AffinityPropagation',
         num_clusters = 2
     ):
-        dataset = self.prepare(
-            dataset, smiles_column = smiles_column
-        )
         features_array = self.extract(
             dataset,
             smiles_column
@@ -275,7 +271,7 @@ class Ouroboros(GeminiMol):
         )
         if label_column is not None:
             labels = dataset[label_column].tolist()
-            cm = confusion_matrix(labels, pred_labels) # labels, pred_labels is array-like, shape (n_samples,)
+            cm = confusion_matrix(list(map(str, labels)), list(map(str, pred_labels)))
             purity = np.sum(np.amax(cm, axis=0)) / np.sum(cm)
             rand_score = adjusted_rand_score(labels, pred_labels)
             ari = adjusted_rand_score(labels, pred_labels)
