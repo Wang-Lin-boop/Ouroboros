@@ -1,4 +1,3 @@
-import numpy as np
 from sklearn.metrics import (
     roc_auc_score, 
     root_mean_squared_error, 
@@ -11,7 +10,6 @@ from sklearn.metrics import (
 )
 from scipy.stats import pearsonr, spearmanr
 import oddt.metrics as vsmetrics
-from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.manifold import TSNE
 from sklearn.decomposition import PCA, DictionaryLearning, KernelPCA, IncrementalPCA, FastICA, SparsePCA, FactorAnalysis
 from sklearn.cluster import KMeans, AgglomerativeClustering, MeanShift, DBSCAN, AffinityPropagation, SpectralClustering, Birch, OPTICS
@@ -92,7 +90,9 @@ label_map = {
 }
 
 cluster_models = {
-    'K-Means': lambda num_clusters: KMeans(n_clusters=num_clusters),
+    'K-Means': lambda num_clusters: KMeans(
+        n_clusters=num_clusters
+    ),
     'euclidean': lambda num_clusters: AgglomerativeClustering(n_clusters=num_clusters),
     'manhattan': lambda num_clusters: AgglomerativeClustering(
         metric='manhattan', 
@@ -110,7 +110,7 @@ cluster_models = {
         metric='hamming',
         eps=0.3,
     ),
-    'AffinityPropagation': lambda num_clusters: AffinityPropagation(),
+    'AffinityPropagation': lambda num_clusters: AffinityPropagation(max_iter=1000),
     'Spectral': lambda num_clusters: SpectralClustering(n_clusters=num_clusters),
     'Birch': lambda num_clusters: Birch(n_clusters=num_clusters),
     'OPTICS': lambda num_clusters: OPTICS(),
@@ -118,15 +118,73 @@ cluster_models = {
 }
 
 reduce_dimension = {
-    'PCA': lambda features, dim_num, seed: PCA(n_components=dim_num, random_state=seed).fit_transform(features),
-    'tSNE': lambda features, dim_num, seed: TSNE(n_components=dim_num, random_state=seed).fit_transform(features),
-    'Dict': lambda features, dim_num, seed: DictionaryLearning(n_components=dim_num, random_state=seed).fit_transform(features),
-    'KPCA': lambda features, dim_num, seed: KernelPCA(n_components=dim_num, random_state=seed).fit_transform(features),
-    'IPCA': lambda features, dim_num, seed: IncrementalPCA(n_components=dim_num).fit_transform(features),
-    'ICA': lambda features, dim_num, seed: FastICA(n_components=dim_num, random_state=seed).fit_transform(features),
-    'SPCA': lambda features, dim_num, seed: SparsePCA(n_components=dim_num, random_state=seed).fit_transform(features),
-    'FA': lambda features, dim_num, seed: FactorAnalysis(n_components=dim_num, random_state=seed).fit_transform(features),
+    'PCA': lambda features, sample_size, seed: PCA(
+        n_components=max(sample_size//10, 2), 
+        random_state=seed
+    ).fit_transform(features),
+    'tSNE': lambda features, sample_size, seed: TSNE(
+        n_components=2, 
+        random_state=seed, 
+        perplexity=min(sample_size, 50), 
+        max_iter=10000
+    ).fit_transform(features),
+    'Dict': lambda features, sample_size, seed: DictionaryLearning(
+        n_components=max(sample_size//10, 2),
+        random_state=seed
+    ).fit_transform(features),
+    'KPCA': lambda features, sample_size, seed: KernelPCA(
+        n_components=max(sample_size//10, 2), 
+        random_state=seed
+    ).fit_transform(features),
+    'IPCA': lambda features, sample_size, seed: IncrementalPCA(
+        n_components=max(sample_size//10, 2)
+    ).fit_transform(features),
+    'ICA': lambda features, sample_size, seed: FastICA(
+        n_components=max(sample_size//10, 2), 
+        random_state=seed
+    ).fit_transform(features),
+    'SPCA': lambda features, sample_size, seed: SparsePCA(
+        n_components=max(sample_size//10, 2), 
+        random_state=seed
+    ).fit_transform(features),
+    'FA': lambda features, sample_size, seed: FactorAnalysis(
+        n_components=max(sample_size//10, 2), 
+        random_state=seed
+    ).fit_transform(features),
 }
 
 
+reduce_2d = {
+    'PCA': lambda features, seed: PCA(
+        n_components=2, 
+        random_state=seed
+    ).fit_transform(features),
+    'tSNE': lambda features, seed: TSNE(
+        n_components=2, 
+        random_state=seed, 
+    ).fit_transform(features),
+    'Dict': lambda features, seed: DictionaryLearning(
+        n_components=2,
+        random_state=seed
+    ).fit_transform(features),
+    'KPCA': lambda features, seed: KernelPCA(
+        n_components=2, 
+        random_state=seed
+    ).fit_transform(features),
+    'IPCA': lambda features, seed: IncrementalPCA(
+        n_components=2
+    ).fit_transform(features),
+    'ICA': lambda features, seed: FastICA(
+        n_components=2, 
+        random_state=seed
+    ).fit_transform(features),
+    'SPCA': lambda features, seed: SparsePCA(
+        n_components=2, 
+        random_state=seed
+    ).fit_transform(features),
+    'FA': lambda features, seed: FactorAnalysis(
+        n_components=2, 
+        random_state=seed
+    ).fit_transform(features)
+}
 

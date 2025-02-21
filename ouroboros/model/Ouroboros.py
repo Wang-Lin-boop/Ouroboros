@@ -13,7 +13,7 @@ from .modules import (
     MultiPropDecoder,
     activation_dict
 )
-from utils.metrics import reduce_dimension, cluster_models
+from utils.metrics import reduce_dimension, cluster_models, reduce_2d
 import rdkit.Chem.rdFMCS as FMCS
 from .GeminiMol import GeminiMol
 from .MolecularGenerator import MolecularGenerator
@@ -205,24 +205,34 @@ class Ouroboros(GeminiMol):
         method = 'tSNE', 
         concise = False,
         concise_max_feat = 100,
-        dim_num = 2, 
         plot_dim = [0, 1]
     ):
         label_series = dataset[label_column]
         features_dataset = self.extract(
             dataset,
             smiles_column
-        ) 
-        if concise:
+        )
+        if concise and method == 'tSNE':
             std_values = features_dataset.std()
             std_top = std_values.sort_values(
                 ascending = False
             )[:max(len(features_dataset.columns)//10, concise_max_feat)].index.to_list()
-            features_dataset = features_dataset[std_top]
-        plt.figure(figsize=(4.5, 4.5), dpi=600)
+            X_embedded = features_dataset[std_top].values
+        elif concise and method != 'tSNE':
+            X_embedded = reduce_dimension[method](
+                features_dataset.values, 
+                min(len(dataset), len(features_dataset.columns)//10), 
+                1207
+            ) # random seed 1207
+        else:
+            X_embedded = features_dataset.values
+        X_embedded = reduce_2d[method](
+            X_embedded, 
+            1207
+        )  # random seed 1207
         if output_fn is None:
             output_fn = f"{self.model_name}_{method}"
-        X_embedded = reduce_dimension[method](features_dataset.values, dim_num, 1207) # random seed 1207
+        plt.figure(figsize=(4.5, 4.5), dpi=600)
         point_size = 6 + min(1200/len(label_series), 20)
         if all(isinstance(x, (float, int)) for x in label_series.to_list()):
             if len(label_series) >= 30:
@@ -256,11 +266,16 @@ class Ouroboros(GeminiMol):
         algorithm = 'AffinityPropagation',
         num_clusters = 2
     ):
-        features_array = self.extract(
+        features_dataset = self.extract(
             dataset,
             smiles_column
-        ).values 
-        cluster_model = cluster_models[algorithm](num_clusters).fit(features_array)
+        )
+        X_embedded = reduce_dimension['PCA'](
+            features_dataset.values, 
+            len(features_dataset.columns)//10, 
+            1207
+        ) # random seed 1207
+        cluster_model = cluster_models[algorithm](num_clusters).fit(X_embedded)
         pred_labels = cluster_model.labels_
         dataset = dataset.join(
             pd.DataFrame(
@@ -275,7 +290,7 @@ class Ouroboros(GeminiMol):
             purity = np.sum(np.amax(cm, axis=0)) / np.sum(cm)
             rand_score = adjusted_rand_score(labels, pred_labels)
             ari = adjusted_rand_score(labels, pred_labels)
-            print(f'NOTE: cluster purity: {purity}, rand_score: {rand_score}, adjusted_rand_score: {ari}')
+            print(f'NOTE: {algorithm} cluster purity: {purity}, rand_score: {rand_score}, adjusted_rand_score: {ari}')
         return dataset
 
     def predict_similarity(
