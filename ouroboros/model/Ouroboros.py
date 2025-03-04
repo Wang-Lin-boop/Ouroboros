@@ -510,7 +510,7 @@ class Ouroboros(GeminiMol):
                     properties_names += label_list
                 features_database = features_database.join(pd.concat(properties_list, axis=1), how='left')
             if len(ref_smiles_list) == 0:
-                total_res = features_database
+                total_res = features_database.copy()
                 del total_res['features']
                 return total_res
         total_res = pd.DataFrame()
@@ -525,14 +525,13 @@ class Ouroboros(GeminiMol):
             if return_all_col:
                 total_res = pd.concat([
                     total_res, 
-                    features_database.join(query_scores, how='left')
+                    features_database.copy().join(query_scores, how='left')
                 ], ignore_index=True)
             else:
                 total_res = pd.concat([
                     total_res, 
-                    features_database[[smiles_column]+properties_names].join(query_scores, how='left')
+                    features_database[[smiles_column]+properties_names].copy().join(query_scores, how='left')
                 ], ignore_index=True)
-        del total_res['features']
         return total_res
 
     def clean_smiles_list(self, input_sents):
@@ -1079,6 +1078,7 @@ class Ouroboros(GeminiMol):
             similarity_metrics = ['Cosine'], 
             worker_num = 1
         )
+        del results['features']
         return results
     
     def fusion(
@@ -1087,16 +1087,19 @@ class Ouroboros(GeminiMol):
         ref_features,
         temperature = 0.1
     ):
-        expand_features = features.repeat(ref_features.size(0), 1)
-        fusion_similarity = self.pairwise_similarity(expand_features, ref_features)
-        sigmoid_loss = ( 1 / (
-            1 + 10000 ** (fusion_similarity - self.flooding[0]))
-        )
-        if temperature == 0.0:
-            return sigmoid_loss.min()
-        else:
-            softmin_loss = -torch.logsumexp(-sigmoid_loss / temperature, dim=0)
-            return softmin_loss
+        loss = torch.tensor(0.0).cuda()
+        for ref_feats in ref_features:
+            expand_features = features.repeat(ref_feats.size(0), 1)
+            fusion_similarity = self.pairwise_similarity(expand_features, ref_feats)
+            sigmoid_loss = ( 1 / (
+                1 + 10000 ** (fusion_similarity - self.flooding[0]))
+            )
+            if temperature == 0.0:
+                loss += sigmoid_loss.min()
+            else:
+                softmin_loss = 1-torch.logsumexp(-sigmoid_loss / temperature, dim=0)
+                loss += softmin_loss
+        return loss
 
     def directional_fusion(
         self,
@@ -1104,15 +1107,7 @@ class Ouroboros(GeminiMol):
         ref_features,
         temperature = 0.1
     ):
-        expand_features = features.repeat(ref_features.size(0), 1)
-        fusion_similarity = self.pairwise_similarity(expand_features, ref_features)
-        sigmoid_loss = ( 1 / (
-            1 + 10000 ** (fusion_similarity - self.flooding[0]))
-        )
-        if temperature == 0.0:
-            similarity_loss = sigmoid_loss.min()
-        else:
-            similarity_loss = -torch.logsumexp(-sigmoid_loss / temperature, dim=0)
+        similarity_loss = self.fusion(features, ref_features, temperature)
         pred_labels = self.proptery_scorer(features)
         abs_property_loss = (pred_labels - self.goals).abs()
         property_loss = torch.mean(
@@ -1136,12 +1131,18 @@ class Ouroboros(GeminiMol):
             self.Generator.get_max_len(ref_smiles_list) + 24
         ]
         if self.mol4seed == False:
-            ref_features = self.encode(ref_smiles_list) 
+            ref_features = []
+            for smiles_list in ref_smiles.values():
+                ref_features.append(self.encode(smiles_list))
             start_features = self.encoding_profile['Mean'].clone().detach()
             output = self.molecular_generation(
                 start_features,
                 partial(
                     self.fusion, 
+                    ref_features = ref_features,
+                    temperature = temperature
+                ) if len(self.Predictor_Info) == 0 else partial(
+                    self.directional_fusion,
                     ref_features = ref_features,
                     temperature = temperature
                 ),
@@ -1153,11 +1154,17 @@ class Ouroboros(GeminiMol):
                 start_features = self.encode(
                     [start_smiles]
                 ).clone().detach()
-                ref_features = self.encode(list(set(ref_smiles_list) - set([start_smiles]))) 
+                ref_features = []
+                for smiles_list in ref_smiles.values():
+                    ref_features.append(self.encode(list(set(smiles_list) - set([start_smiles]))))
                 output = self.molecular_generation(
                     start_features,
                     partial(
                         self.fusion, 
+                        ref_features = ref_features,
+                        temperature = temperature
+                    ) if len(self.Predictor_Info) == 0 else partial(
+                        self.directional_fusion,
                         ref_features = ref_features,
                         temperature = temperature
                     ),
@@ -1196,6 +1203,7 @@ class Ouroboros(GeminiMol):
         output['Score'] = output[list(ref_smiles.keys())].apply(
             lambda row: (row - self.flooding[0]).clip(lower=0).sum(), axis=1
         )
+        del output['features']
         return output
     
     

@@ -5,7 +5,6 @@ import torch
 import pandas as pd
 from model.Ouroboros import Ouroboros
 from utils.chem import cal_SAScore
-from utils.chem import check_smiles_validity
 
 if __name__ == '__main__':
     # check GPU
@@ -49,9 +48,9 @@ if __name__ == '__main__':
         model_name = model_name, 
         batch_size = 128,
         predictor_info = {
-            'Lipophilicity_AstraZeneca': 0.5, # 1.5 if not standardization
-            'Caco2_Wang': 0.8, # -2.0 if not standardization
-            'Solubility_AqSolDB': 0.8, # -2.0 if not standardization
+            'Lipophilicity': 0.5, # 1.5 if not standardization
+            'Caco2': 0.8, # -2.0 if not standardization
+            'Solubility': 0.8, # -2.0 if not standardization
         },
         driver = sample_mode[0],
         mol4seed = False if sample_mode[6] in ['False', 'None', 'F', 'No', 'N', 'no', 'false', 'none'] else True,
