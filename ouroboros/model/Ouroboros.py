@@ -511,7 +511,6 @@ class Ouroboros(GeminiMol):
                 features_database = features_database.join(pd.concat(properties_list, axis=1), how='left')
             if len(ref_smiles_list) == 0:
                 total_res = features_database.copy()
-                del total_res['features']
                 return total_res
         total_res = pd.DataFrame()
         for ref_smiles in ref_smiles_list:
@@ -709,6 +708,7 @@ class Ouroboros(GeminiMol):
         )
         print(f'NOTE: check the accessibility of {ref_smiles}, total {len(set(output_smiles["smiles"]))} unique smiles.')
         print(f'NOTE: the miximum simlarity: {results["Cosine"].max()}, mean simlarity: {results["Cosine"].mean()}')
+        del results['features']
         return results
 
     def stochastic_propagation(
@@ -764,6 +764,7 @@ class Ouroboros(GeminiMol):
             similarity_metrics = ['Cosine'], 
             worker_num = 1
         )
+        del results['features']
         return results
 
     def MCMC(
@@ -998,6 +999,7 @@ class Ouroboros(GeminiMol):
                 similarity_metrics = ['Cosine'], 
                 worker_num = 1
             )
+        del results['features']
         return results
 
     def migration(
@@ -1012,9 +1014,7 @@ class Ouroboros(GeminiMol):
         features,
         ref_features,
     ):
-        similarity_loss = 1 - self.pairwise_similarity(
-            ref_features, features
-        )
+        similarity_loss = (1 - self.pairwise_similarity(ref_features, features))
         pred_labels = self.proptery_scorer(features)
         abs_property_loss = (pred_labels - self.goals).abs()
         property_loss = torch.mean(
