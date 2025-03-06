@@ -67,8 +67,6 @@ if __name__ == '__main__':
     if running_mode in [
         'migration', 
         'restricted_migration', 
-        'directional_scaffold_hopping', 
-        'scaffold_hopping'
     ]:
         assert isinstance(ref_smiles, str), f'Please provide a SMILES for {running_mode}.'
         results = ouroboros_model.directed_migration(

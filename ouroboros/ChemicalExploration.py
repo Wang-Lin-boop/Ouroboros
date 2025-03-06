@@ -25,7 +25,9 @@ if __name__ == '__main__':
     running_mode = sys.argv[3]
     job_name = sys.argv[4]
     if running_mode.split(":")[0] in [
-        'directional_optimization'
+        'directional_optimization',
+        'scaffold_hopping',
+        'directional_scaffold_hopping'
     ]:
         predictor_info = {
             'Lipophilicity': 0.6,

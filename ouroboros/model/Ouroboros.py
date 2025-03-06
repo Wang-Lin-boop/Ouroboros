@@ -926,6 +926,23 @@ class Ouroboros(GeminiMol):
         )
         return property_loss
 
+    def scaffold_hopping(
+        self,
+        features,
+        ref_features,
+    ):
+        return (
+            self.pairwise_similarity(features, ref_features) - self.flooding[1]
+        ).abs()
+
+    def directional_scaffold_hopping(
+        self,
+        features,
+        ref_features,
+    ):
+        similarity_loss = self.scaffold_hopping(features, ref_features)
+        return similarity_loss * self.directional_optimization(features)
+
     def directed_exploration(
         self,
         start_smiles = None,
@@ -949,6 +966,24 @@ class Ouroboros(GeminiMol):
                 start_features,
                 partial(
                     self.directional_optimization, 
+                ),
+                length_list = length_list
+            )
+        elif exploration_obj == 'scaffold_hopping':
+            output = self.molecular_generation(
+                start_features,
+                partial(
+                    self.scaffold_hopping, 
+                    ref_features = start_features.clone().detach()
+                ),
+                length_list = length_list
+            )
+        elif exploration_obj == 'directional_scaffold_hopping':
+            output = self.molecular_generation(
+                start_features,
+                partial(
+                    self.directional_scaffold_hopping, 
+                    ref_features = start_features.clone().detach()
                 ),
                 length_list = length_list
             )
@@ -976,40 +1011,20 @@ class Ouroboros(GeminiMol):
         self,
         features,
         ref_features,
-        start_features,
     ):
-        return 1 - self.pairwise_similarity(
-                ref_features, features
-            ) * (
-                self.pairwise_similarity(
-                    features, start_features
-                ) - self.flooding[1]
-            ).abs()
-
-    def scaffold_hopping(
-        self,
-        features,
-        ref_features,
-    ):
-        return (
-            self.pairwise_similarity(features, ref_features) - self.flooding[1]
-        ).abs()
-
-    def directional_scaffold_hopping(
-        self,
-        features,
-        ref_features,
-    ):
-        pred_labels = self.proptery_scorer(
-            features     
+        similarity_loss = 1 - self.pairwise_similarity(
+            ref_features, features
         )
-        return (
-            len(self.Predictor_Info)/(1-self.flooding[1])
-        ) * (
-            self.pairwise_similarity(features, ref_features) - self.flooding[1]
-        ).abs() + torch.sum(
-            (pred_labels - self.goals).abs(), dim = -1
+        pred_labels = self.proptery_scorer(features)
+        abs_property_loss = (pred_labels - self.goals).abs()
+        property_loss = torch.mean(
+            (
+                -1 / ( 1 + 10000 ** (abs_property_loss - 0.5)) + 1 
+                # 0.5 is the threshold, all properties are normalized to [0, 1] in property prediction
+            ), 
+            dim = -1
         )
+        return similarity_loss * property_loss
 
     def directed_migration(
         self,
@@ -1017,7 +1032,6 @@ class Ouroboros(GeminiMol):
         start_smiles = None,
         migration_obj = 'migration',
     ):
-        
         ref_features = self.encode([ref_smiles]) 
         if start_smiles is None:
             start_features = self.encoding_profile['Mean']
@@ -1046,24 +1060,14 @@ class Ouroboros(GeminiMol):
                 partial(
                     self.restricted_migration, 
                     ref_features=ref_features,
-                    start_features = start_features.clone().detach()
                 ),
                 length_list = length_list
             )
         elif migration_obj == 'scaffold_hopping':
             output = self.molecular_generation(
-                start_features,
+                ref_features,
                 partial(
                     self.scaffold_hopping, 
-                    ref_features=ref_features
-                ),
-                length_list = length_list
-            )
-        elif migration_obj == 'directional_scaffold_hopping':
-            output = self.molecular_generation(
-                start_features,
-                partial(
-                    self.directional_scaffold_hopping, 
                     ref_features=ref_features
                 ),
                 length_list = length_list
