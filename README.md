@@ -328,15 +328,11 @@ Besides to the functions mentioned in the tutorial above, you can also use vario
 
 coming soon.... 
 
-## ✅ License
-
-Ouroboros is released under the **Apache** Licence, which permits non-profit use, modification and distribution free of charge.     
-
 ## 💌 Get in Touch
 
-We welcome community contributions of extension tools based on the Ouroboros model, etc. If you have any questions not covered in here, please contact the Developer Team via Wanglin1102@outlook.com. We would like to hear your feedback and understand how Ouroboros has been useful in your research. Share your stories with [us](Wanglin1102@outlook.com).    
+Our model aims to provide thoughts on the design of novel chemotypes for medicinal chemists. We welcome community contributions of extension tools based on the Ouroboros model, etc. If you have any questions not covered in here, please contact the Developer Team via Wanglin1102@outlook.com. We would like to hear your feedback and understand how Ouroboros has been useful in your research. Share your stories with [us](Wanglin1102@outlook.com).    
 
-Our model aims to provide thoughts on the design of novel chemotypes for medicinal chemists. You are welcome to contact our development team via Wanglin1102@outlook.com in the event that you would like to use our in-house version under development.     
+Ouroboros is released under the **MIT** Licence, which permits non-profit use, modification and distribution free of charge. You are welcome to contact our development team via Wanglin1102@outlook.com in the event that you would like to use our in-house version under development.     
 
 ## 😃 Acknowledgements
 
