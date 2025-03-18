@@ -89,7 +89,7 @@ pip install torchtriton --extra-index-url "https://download.pytorch.org/whl/nigh
 <summary>Download datasets and Ouroboros models</summary>
 <br>
 
-In this repository, we provide the pre-trained Ouroboros models and useful chemical datasets, you can download them via [ZhangLab WebPage](https://zhanglab.comp.nus.edu.sg/Ouroboros/). Then, we need place the models to the `${ouroboros_lib}`, and place the chemical datasets to `${ouroboros_dataset}`.       
+In this repository, we provide the molecular dataset (`datasets/MolecularDataset.csv`), pre-trained Ouroboros models and useful chemical datasets, you can download the last two via [ZhangLab WebPage](https://zhanglab.comp.nus.edu.sg/Ouroboros/). Then, we need place the models to the `${ouroboros_lib}`, and place the chemical datasets to `${ouroboros_dataset}`. Besides this, benchmark test sets (e.g. DUD-E and LIT-PCBA) are available from the original article, and to get pre-processed data, you can download it from [Zenodo](https://zenodo.org/records/10450788).        
 
 We provide three different versions of the model, all of them trained based on the strategy reported in the paper, with the difference that:    
 ```
