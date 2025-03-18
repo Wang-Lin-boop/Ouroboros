@@ -330,7 +330,7 @@ coming soon....
 
 ## ✅ License
 
-Ouroboros is released under the **Apache** Licence, which permits non-profit use, modification and distribution free of charge.     
+Ouroboros is released under the **MIT** Licence, which permits non-profit use, modification and distribution free of charge.     
 
 ## 💌 Get in Touch
 
