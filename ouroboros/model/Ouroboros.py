@@ -775,7 +775,8 @@ class Ouroboros(GeminiMol):
         replica_num=10, 
         num_steps_per_replica=30, 
         loud = 0.5,
-        temperature = 0.10
+        temperature = 0.10,
+        learning_rate = None,
     ):
         output_smiles = {
             'smiles': [],
