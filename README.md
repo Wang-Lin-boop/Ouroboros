@@ -326,7 +326,9 @@ Besides to the functions mentioned in the tutorial above, you can also use vario
 
 ## ⭐ Citing This Work
 
-coming soon.... 
+Directed Chemical Evolution via Navigating Molecular Encoding Space
+Lin Wang, Yifan Wu, Hao Luo, Minglong Liang, Yihang Zhou, Cheng Chen, Chris Liu, Jun Zhang, Yang Zhang
+bioRxiv 2025.03.18.643899; doi: https://doi.org/10.1101/2025.03.18.643899
 
 ## 💌 Get in Touch
 
