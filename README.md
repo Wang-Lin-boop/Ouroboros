@@ -1,7 +1,7 @@
 <h1 align="center">  Ouroboros  </h1>
 <h3 align="center"> Directed Chemical Evolution via Navigating Molecular Encoding Space </h3>
 <p align="center">
-  📃 <a href="https://zhanglab.comp.nus.edu.sg/Ouroboros/" target="_blank">Paper</a> ·  🤗 <a href="https://zhanglab.comp.nus.edu.sg/Ouroboros/" target="_blank">Model</a> ·  📕 <a href="https://zhanglab.comp.nus.edu.sg/Ouroboros/" target="_blank">Data</a><br>
+  📃 <a href="https://doi.org/10.1101/2025.03.18.643899" target="_blank">Paper</a> ·  🤗 <a href="https://zhanglab.comp.nus.edu.sg/Ouroboros/" target="_blank">Model</a> ·  📕 <a href="https://zhanglab.comp.nus.edu.sg/Ouroboros/" target="_blank">Data</a><br>
 </p>
 
 <p align="center">
