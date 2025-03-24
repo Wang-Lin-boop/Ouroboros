@@ -257,12 +257,13 @@ export ouroboros_model="Ouroboro_M0"
 export running_mode="directional_optimization:MyQSAR_1,MyQSAR_2"
 export start_smiles="COC(=O)CCC/N=C1\SCCN1Cc1ccccc1" # SMILES of strat molecules
 export optim="AdamW" 
-export replica_num=10 # [2,600]
+export replica_num=10 # [1,600]
 export steps=600 # [400,1200]
+export step_interval=10
 export loud=0.4 # [0.1,0.5], for replica more than 2, we add the nosie to 1D vector based on ${loud}.
 export temperature=0.6 # [0.2,0.8]
 export learning_rate="3.0e-5" # [1.0e-5,1.0e-4]
-python -u ${ouroboros_app}/ChemicalExploration.py "${start_smiles}" "${ouroboros_model}" "${running_mode}" "${job_name}" "${optim}:${replica_num}:${steps}:${loud}:${temperature}:${learning_rate}"
+python -u ${ouroboros_app}/ChemicalExploration.py "${start_smiles}" "${ouroboros_model}" "${running_mode}" "${job_name}" "${optim}:${replica_num}:${steps}:${step_interval}:${loud}:${temperature}:${learning_rate}"
 ```
 
 In molecular property modeling, larger values (close to 1.0 after standardization) are usually what we expect. Therefore, for all custom molecular properties, we set the optimization target to 1.0. If you wanna to change this, please modify the source code to achieve it.    
@@ -278,12 +279,13 @@ export running_mode="migration"
 export ref_smiles="C#Cc1cccc(Nc2ncnc3cc(OCCOC)c(OCCOC)cc23)c1" # SMILES of reference molecules
 export start_smiles="COC(=O)CCC/N=C1\SCCN1Cc1ccccc1" # SMILES of strat molecules
 export optim="AdamW" 
-export replica_num=10 # [2,600]
+export replica_num=10 # [1,600]
 export steps=600 # [400,1200]
+export step_interval=10
 export loud=0.4 # [0.1,0.5], for replica more than 2, we add the nosie to 1D vector based on ${loud}.
 export temperature=0.6 # [0.2,0.8]
 export learning_rate="1.0e-5" # [1.0e-5,1.0e-4]
-python -u ${ouroboros_app}/ChemicalMigration.py "${ref_smiles}.${start_smiles}" "${ouroboros_model}" "${running_mode}" "${optim}:${replica_num}:${steps}:${loud}:${temperature}:${learning_rate}" "${job_name}" "True"
+python -u ${ouroboros_app}/ChemicalMigration.py "${ref_smiles}.${start_smiles}" "${ouroboros_model}" "${running_mode}" "${optim}:${replica_num}:${steps}:${step_interval}:${loud}:${temperature}:${learning_rate}" "${job_name}" "True"
 ```
 
 If the `${start_smiles}` is None (given only `"${ref_smiles}"`), Ouroboros will use noise derived from the center of encoding space as the starting point.    
@@ -298,12 +300,13 @@ export ouroboros_model="Ouroboro_M0"
 export probe_datasets="dataset.csv" # SMILES of reference molecules
 export fusion_targets="AURKA:PI3Kg"
 export optim="AdamW" 
-export replica_num=10 # [2,600]
+export replica_num=10 # [1,600]
 export steps=600 # [400,1200]
+export step_interval=10
 export loud=0.4 # [0.1,0.5], for replica more than 2, we add the nosie to 1D vector based on ${loud}.
 export temperature=0.6 # [0.2,0.8]
 export learning_rate="1.0e-5" # [1.0e-5,1.0e-4]
-python -u ${ouroboros_app}/ChemicalFusion.py "${probe_datasets}@${fusion_targets}" "${ouroboros_model}" "${optim}:${replica_num}:${steps}:${loud}:${temperature}:${learning_rate}" "${job_name}" "True"
+python -u ${ouroboros_app}/ChemicalFusion.py "${probe_datasets}@${fusion_targets}" "${ouroboros_model}" "${optim}:${replica_num}:${steps}:${step_interval}:${loud}:${temperature}:${learning_rate}" "${job_name}" "True"
 ```
 
 By default, chemical fusion only supports fusion between 2 groups of molecules. If you need to fuse multiple groups of molecules, you can achieve this by modifying the `ChemicalFusion.py`.    
