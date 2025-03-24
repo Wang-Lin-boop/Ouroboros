@@ -18,7 +18,13 @@ def cal_MCS_score(smiles1, mol2, atom_mode="any"):
     mol1 = Chem.MolFromSmiles(smiles1)
     mols = [mol1, mol2]
     min_bond_num = np.min([len(mol1.GetBonds()), len(mol2.GetBonds())])
-    res = FMCS.FindMCS(mols, ringMatchesRingOnly=True, atomCompare=(FMCS.AtomCompare.CompareAny if atom_mode == "any" else FMCS.AtomCompare.CompareElements))
+    res = FMCS.FindMCS(
+        mols, 
+        ringMatchesRingOnly=True, 
+        atomCompare=(
+            FMCS.AtomCompare.CompareAny if atom_mode == "any" else FMCS.AtomCompare.CompareElements
+        )
+    )
     return None if res is None else res.numBonds / min_bond_num
 
 def is_valid_smiles(smiles):
