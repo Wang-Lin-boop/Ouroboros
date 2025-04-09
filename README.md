@@ -72,7 +72,7 @@ To set up the Ouroboros model, we recommend using conda for Python environment c
 Before running Ouroboros, you need to install dependency packages.   
 
 ```
-conda activate -n Ouroboros python=3.9
+conda activate Ouroboros
 
 pip install pandas six scipy tqdm dill pyarrow matplotlib
 pip install oddt scikit-learn rdkit umap-learn selfies
@@ -81,8 +81,9 @@ pip install dgl -f https://data.dgl.ai/wheels/torch-2.2/cu121/repo.html
 pip install dglgo -f https://data.dgl.ai/wheels/torch-2.2/cu121/repo.html
 pip install dgllife
 
-pip install torchtriton --extra-index-url "https://download.pytorch.org/whl/nightly/cu121"
+pip install torchtriton --extra-index-url "https://download.pytorch.org/whl/nightly/cu121" # pip install torchtriton --extra-index-url "https://download.pytorch.org/whl/nightly/cu117" , if no matching distribution found.
 ```
+
 </details>
 
 <details>
