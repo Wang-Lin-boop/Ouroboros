@@ -74,8 +74,9 @@ Before running Ouroboros, you need to install dependency packages.
 ```
 conda activate Ouroboros
 
-pip install pandas six scipy tqdm dill pyarrow matplotlib
-pip install oddt scikit-learn rdkit umap-learn selfies
+pip install six==1.17.0 tqdm==4.67.1 dill==0.3.9 pyarrow==19.0.0 
+pip install pandas==1.5.3 scipy==1.13.1 matplotlib==3.9.4 
+pip install numpy==1.23.5 seaborn==0.13.2 scikit-learn==1.6.1 rdkit==2024.9.5 selfies==2.2.0 oddt==0.7
 
 pip install dgl -f https://data.dgl.ai/wheels/torch-2.2/cu121/repo.html
 pip install dglgo -f https://data.dgl.ai/wheels/torch-2.2/cu121/repo.html
