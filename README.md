@@ -75,7 +75,7 @@ conda activate Ouroboros
 
 pip install six==1.17.0 tqdm==4.67.1 dill==0.3.9 pyarrow==19.0.0 
 pip install pandas==1.5.3 scipy==1.13.1 matplotlib==3.9.4 
-pip install numpy==1.23.5 seaborn==0.13.2 scikit-learn==1.6.1 rdkit==2024.9.5 selfies==2.2.0 oddt==0.7
+pip install numpy==1.23.5 seaborn==0.13.2 rdkit==2024.9.5 selfies==2.2.0 oddt==0.7 scikit-learn==1.6.1
 
 pip install dgl -f https://data.dgl.ai/wheels/torch-2.2/cu121/repo.html
 pip install dglgo -f https://data.dgl.ai/wheels/torch-2.2/cu121/repo.html
@@ -209,7 +209,7 @@ export smiles_column="SMILES" # Specify the column name in datasets
 export label_column="Label" # Specify the column name in datasets
 export metric="SPEARMANR" # Specify the validation metric
 export job_name=${dataset_prefix##*/}_${ouroboros_model##*/}
-python -u ${ouroboros_app}/PropModeling.py ${dataset_prefix} "${ouroboros_models}/${ouroboros_model}" "${smiles_column}" "${label_column}:${metric}" ${dataset_prefix##*/}
+python -u ${ouroboros_app}/PropModeling.py ${dataset_prefix} "${ouroboros_lib}/${ouroboros_model}" "${smiles_column}" "${label_column}:${metric}" ${dataset_prefix##*/}
 ```
 
 The model appears under the `${ouroboros_model}/` path at the end of the job run, at which point it is ready to be applied in molecule generation or virtual screening. In the `${ouroboros_dataset}`, we provide four distinct molecular property datasets: *solubility, lipophilicity, Caco-2 membrane permeability*, and *synthetic accessibility*. Ouroboros demonstrates superior modeling performance for these properties, which will serve as the default constraints on molecular properties for chemical evolution. Ideally, this will assist the model in exploring a chemically feasible space with an optimal hydrophilic-lipophilic balance and synthetic accessibility.   
@@ -221,7 +221,7 @@ Furthermore, for some small molecular datasets, you can use `PropPredictor.py` t
 export ouroboros_model="Ouroboros_M1c"
 export dataset="dataset.csv" # Specify a path to your datasets
 export smiles_column="SMILES" # Specify the column name in datasets
-python -u ${ouroboros_app}/PropPredictor.py ${ouroboros_model} "${smiles_column}" "${dataset}"
+python -u ${ouroboros_app}/PropPredictor.py "${ouroboros_lib}/${ouroboros_model}" "${smiles_column}" "${dataset}"
 ```
 
 This will apply all available molecular property predictors in `${ouroboros_model}` for the `${smiles_column}` of `${dataset}`, resulting in a blanket prediction. If you are a cloud service provider, be aware of potential leakage risks in your deployment.   
@@ -243,7 +243,7 @@ export job_name="ChemicalCheck"
 export ouroboros_model="Ouroboros_M1c"
 export running_mode="check"
 export start_smiles="COC(=O)CCC/N=C1\SCCN1Cc1ccccc1" # SMILES of strat molecules
-python -u ${ouroboros_app}/ChemicalExploration.py "${start_smiles}" "${ouroboros_model}" "${running_mode}" "${job_name}"
+python -u ${ouroboros_app}/ChemicalExploration.py "${start_smiles}" "${ouroboros_lib}/${ouroboros_model}" "${running_mode}" "${job_name}"
 ```
 
 You can view the results in `$ {job_name}_generation.csv`, which include reproducing the input molecules at different temperatures of `0.0 - 0.8`, with the maximum `Cosine` similarity closer to 1 being better. In most cases, Ouroboro reproduces the original molecule with a similarity of over 0.9, with approximately 50% of cases having a similarity of over 0.99 (identical to the original molecule). If you find that the similarity of the starting molecule is less than 0.8, please contact our development team to investigate the cause.   
@@ -264,7 +264,7 @@ export step_interval=10
 export loud=0.4 # [0.1,0.5], for replica more than 2, we add the nosie to 1D vector based on ${loud}.
 export temperature=0.6 # [0.2,0.8]
 export learning_rate="3.0e-5" # [1.0e-5,1.0e-4]
-python -u ${ouroboros_app}/ChemicalExploration.py "${start_smiles}" "${ouroboros_model}" "${running_mode}" "${job_name}" "${optim}:${replica_num}:${steps}:${step_interval}:${loud}:${temperature}:${learning_rate}"
+python -u ${ouroboros_app}/ChemicalExploration.py "${start_smiles}" "${ouroboros_lib}/${ouroboros_model}" "${running_mode}" "${job_name}" "${optim}:${replica_num}:${steps}:${step_interval}:${loud}:${temperature}:${learning_rate}"
 ```
 
 In molecular property modeling, larger values (close to 1.0 after standardization) are usually what we expect. Therefore, for all custom molecular properties, we set the optimization target to 1.0. If you wanna to change this, please modify the source code to achieve it.    
@@ -286,7 +286,7 @@ export step_interval=10
 export loud=0.4 # [0.1,0.5], for replica more than 2, we add the nosie to 1D vector based on ${loud}.
 export temperature=0.6 # [0.2,0.8]
 export learning_rate="1.0e-5" # [1.0e-5,1.0e-4]
-python -u ${ouroboros_app}/ChemicalMigration.py "${ref_smiles}.${start_smiles}" "${ouroboros_model}" "${running_mode}" "${optim}:${replica_num}:${steps}:${step_interval}:${loud}:${temperature}:${learning_rate}" "${job_name}" "True"
+python -u ${ouroboros_app}/ChemicalMigration.py "${ref_smiles}.${start_smiles}" "${ouroboros_lib}/${ouroboros_model}" "${running_mode}" "${optim}:${replica_num}:${steps}:${step_interval}:${loud}:${temperature}:${learning_rate}" "${job_name}" "True"
 ```
 
 If the `${start_smiles}` is None (given only `"${ref_smiles}"`), Ouroboros will use noise derived from the center of encoding space as the starting point.    
@@ -307,7 +307,7 @@ export step_interval=10
 export loud=0.4 # [0.1,0.5], for replica more than 2, we add the nosie to 1D vector based on ${loud}.
 export temperature=0.6 # [0.2,0.8]
 export learning_rate="1.0e-5" # [1.0e-5,1.0e-4]
-python -u ${ouroboros_app}/ChemicalFusion.py "${probe_datasets}@${fusion_targets}" "${ouroboros_model}" "${optim}:${replica_num}:${steps}:${step_interval}:${loud}:${temperature}:${learning_rate}" "${job_name}" "True"
+python -u ${ouroboros_app}/ChemicalFusion.py "${probe_datasets}@${fusion_targets}" "${ouroboros_lib}/${ouroboros_model}" "${optim}:${replica_num}:${steps}:${step_interval}:${loud}:${temperature}:${learning_rate}" "${job_name}" "True"
 ```
 
 By default, chemical fusion only supports fusion between 2 groups of molecules. If you need to fuse multiple groups of molecules, you can achieve this by modifying the `ChemicalFusion.py`.    
