@@ -81,6 +81,9 @@ pip install dgl -f https://data.dgl.ai/wheels/torch-2.2/cu121/repo.html
 pip install dglgo -f https://data.dgl.ai/wheels/torch-2.2/cu121/repo.html
 pip install dgllife
 
+pip3 install torch==2.2.1 torchvision==0.17.1 torchaudio==2.2.1 \
+--index-url https://download.pytorch.org/whl/cu121
+
 pip install pytorch-triton --extra-index-url "https://download.pytorch.org/whl/nightly/cu121"
 ```
 
