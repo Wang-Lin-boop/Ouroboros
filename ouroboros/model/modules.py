@@ -178,7 +178,6 @@ class MultiPropDecoder(nn.Module):
         self.scattered_concentrate.cuda()
         self.projection.cuda()
     
-    @torch.compile
     def forward(self, features, projected_feats):
         concentrate_features = self.dense_concentrate(features) + self.scattered_concentrate(projected_feats)
         return self.projection(
