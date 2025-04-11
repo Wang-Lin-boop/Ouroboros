@@ -51,7 +51,6 @@ To set up the Ouroboros model, we recommend using conda for Python environment c
 
 ``` shell
     conda create -n Ouroboros python=3.9
-    conda activate Ouroboros
 ```
 
 > Setting up Ouroboros PATH and configuration   
@@ -82,7 +81,7 @@ pip install dgl -f https://data.dgl.ai/wheels/torch-2.2/cu121/repo.html
 pip install dglgo -f https://data.dgl.ai/wheels/torch-2.2/cu121/repo.html
 pip install dgllife
 
-pip install torchtriton --extra-index-url "https://download.pytorch.org/whl/nightly/cu121" # pip install torchtriton --extra-index-url "https://download.pytorch.org/whl/nightly/cu117" , if no matching distribution found.
+pip install torchtriton==3.0.0
 ```
 
 </details>
