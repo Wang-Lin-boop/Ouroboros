@@ -81,7 +81,7 @@ pip install dgl -f https://data.dgl.ai/wheels/torch-2.2/cu121/repo.html
 pip install dglgo -f https://data.dgl.ai/wheels/torch-2.2/cu121/repo.html
 pip install dgllife
 
-pip install pytorch-triton --extra-index-url "https://download.pytorch.org/whl/nightly/cu121" # pip install torchtriton --extra-index-url "https://download.pytorch.org/whl/nightly/cu121 
+pip install pytorch-triton --extra-index-url "https://download.pytorch.org/whl/nightly/cu121"
 ```
 
 </details>
@@ -157,10 +157,10 @@ Here, `profile_set` represents the provided pharmacological profile by the user,
 We have provided a processed version of the commercial compound library at the `${ouroboros_dataset}/commercial.csv`, which contained 19,116,695 purchasable compounds. To perform target identification, the compound library can be replaced with the `${ouroboros_dataset}/DTIDB.csv`, which contains drug-target relationships. This is a processed version of the BindingDB database, which contains 2,159,221 target-ligand paris.      
 
 ``` shell
-export ouroboros_model="Ouroboro_M0"
+export ouroboros_model="Ouroboro_M1c"
 export job_name="Virtual_Screening"
 export profile_set="profile.csv" # SMILES (same to compound library) and Label/Target/Weight
-export label_col="Target" # weights for profiles
+export label_col="Target" # weights for profiles, can be Target, Label or other your provided in profile.csv
 export compound_library="${ouroboros_dataset}/commercial.csv" 
 export smiles_column="SMILES" # Specify the column name in the compound_library
 export keep_top=1000
@@ -188,7 +188,7 @@ export smiles_column="SMILES" # Specify the column name in datasets
 export label_column="Label" # Specify the column name in datasets
 export dataset="${ouroboros_dataset}/data.csv"
 export dataset_bp=${dataset##*/}
-for method in "skeleton" "CombineFP" "MACCS" "ECFP4:AtomPairs";do # how to define scaffold
+for method in "skeleton" "CombineFP";do # how to define scaffold, also can be "MACCS" "ECFP4:AtomPairs" "ECFP4" ... ...
 export dataset_name=${dataset_bp%%.csv}_${method}
 python -u ${ouroboros_app}/utils/advanced_partition.py ${dataset} ${dataset_name} ${smiles_column} ${label_column} 0.3 0.1 "${method}"
 done
@@ -203,7 +203,7 @@ Please keep your dataset partition safe, it is important to reproduce previous r
 Hyperparameter tuning is important for most molecular property modeling tasks. Here we provide a `PropModeling.py` for molecular property modeling where the hyperparameter settings seem to work well on most tasks. Of course, if further performance improvements are desired, then changing the script to find better hyperparameters is necessary.   
 
 ``` shell
-export ouroboros_model="Ouroboro_M0"
+export ouroboros_model="Ouroboro_M1c"
 export dataset_prefix="${ouroboros_dataset}/Your_Dataset/Your_Dataset" # Specify a path and file prefix to your datasets (train, valid, and test)
 export smiles_column="SMILES" # Specify the column name in datasets
 export label_column="Label" # Specify the column name in datasets
@@ -218,7 +218,7 @@ The model appears under the `${ouroboros_model}/` path at the end of the job run
 Furthermore, for some small molecular datasets, you can use `PropPredictor.py` to directly predict their molecular properties.    
 
 ``` shell
-export ouroboros_model="Ouroboro_M0"
+export ouroboros_model="Ouroboro_M1c"
 export dataset="dataset.csv" # Specify a path to your datasets
 export smiles_column="SMILES" # Specify the column name in datasets
 python -u ${ouroboros_app}/PropPredictor.py ${ouroboros_model} "${smiles_column}" "${dataset}"
@@ -240,7 +240,7 @@ Before using Ouroboros, you can first check if Ouroboros can reconstruct your st
 
 ``` shell
 export job_name="ChemicalCheck"
-export ouroboros_model="Ouroboro_M0"
+export ouroboros_model="Ouroboro_M1c"
 export running_mode="check"
 export start_smiles="COC(=O)CCC/N=C1\SCCN1Cc1ccccc1" # SMILES of strat molecules
 python -u ${ouroboros_app}/ChemicalExploration.py "${start_smiles}" "${ouroboros_model}" "${running_mode}" "${job_name}"
@@ -254,7 +254,7 @@ The purpose of chemical exploration is to **explore the surrounding chemical spa
 
 ``` shell
 export job_name="ChemicalExploration"
-export ouroboros_model="Ouroboro_M0"
+export ouroboros_model="Ouroboro_M1c"
 export running_mode="directional_optimization:MyQSAR_1,MyQSAR_2"
 export start_smiles="COC(=O)CCC/N=C1\SCCN1Cc1ccccc1" # SMILES of strat molecules
 export optim="AdamW" 
@@ -275,7 +275,7 @@ The purpose of chemical migration is to observe **the transformation of chemical
 
 ``` shell
 export job_name="ChemicalMigration"
-export ouroboros_model="Ouroboro_M0"
+export ouroboros_model="Ouroboro_M1c"
 export running_mode="migration"
 export ref_smiles="C#Cc1cccc(Nc2ncnc3cc(OCCOC)c(OCCOC)cc23)c1" # SMILES of reference molecules
 export start_smiles="COC(=O)CCC/N=C1\SCCN1Cc1ccccc1" # SMILES of strat molecules
@@ -297,7 +297,7 @@ The purpose of chemical fusion is to **integrate molecules with multiple phenoty
 
 ``` shell
 export job_name="ChemicalFusion"
-export ouroboros_model="Ouroboro_M0"
+export ouroboros_model="Ouroboro_M1c"
 export probe_datasets="dataset.csv" # SMILES of reference molecules
 export fusion_targets="AURKA:PI3Kg"
 export optim="AdamW" 
