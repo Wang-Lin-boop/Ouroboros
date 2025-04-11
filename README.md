@@ -166,7 +166,7 @@ export smiles_column="SMILES" # Specify the column name in the compound_library
 export keep_top=1000
 export probe_cluster="Yes"
 export flooding=0.5
-python -u ${ouroboros_app}/PharmProfiler.py "${ouroboros_lib}/${ouroboros_model}" "${job_name}" "${smiles_column}" "${compound_library}" "${profile_set}" "${weight_column}" "${probe_cluster}" "${flooding}" "${keep_top}" 
+python -u ${ouroboros_app}/PharmProfiler.py "${ouroboros_lib}/${ouroboros_model}" "${job_name}" "${smiles_column}" "${compound_library}" "${profile_set}" "${label_col}" "${probe_cluster}" "${flooding}" "${keep_top}" 
 ```
 
 After the initial run of PharmProfiler, a extracted feature database `xxx.pkl` will be generated in `${ouroboros_model}`. Subsequent screening tasks on the same compound library can benefit from PharmProfiler automatically reading the feature file, which helps to accelerate the running speed.    
