@@ -152,7 +152,7 @@ if __name__ == '__main__':
     model_name = sys.argv[1]
     encoder = Ouroboros(
         model_name,
-        batch_size = 2048,
+        batch_size = 512,
         predictor_info = {},
         generator = False,
         flooding = [0.3, 0.6], # CSS sim, 2D sim, min sim
