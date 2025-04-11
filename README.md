@@ -253,12 +253,12 @@ You can view the results in `$ {job_name}_generation.csv`, which include reprodu
 
 > 1. **Chemical Exploration**
 
-The purpose of chemical exploration is to **explore the surrounding chemical space from the starting molecule**, using pre-trained molecular property predictors as navigator (for defining loss functions) and optimizing **1D representation vector** through gradient optimizers.    
+The purpose of chemical exploration is to **explore the surrounding chemical space from the starting molecule**, using pre-trained molecular property predictors as navigator (for defining loss functions) and optimizing **1D representation vector** through gradient optimizers. Among these modes, `scaffold_hopping` generates molecules with similar pharmacophore profiles as the starting molecule but with diverse 2D structures, `directional_optimization` optimizes molecular properties under the guidance of the navigator, and `directional_scaffold_hopping` combines the two to keep molecular properties of the molecules while maintaining similar pharmacophore profiles.     
 
 ``` shell
 export job_name="ChemicalExploration"
 export ouroboros_model="Ouroboros_M1c"
-export running_mode="directional_optimization:MyQSAR_1,MyQSAR_2"
+export running_mode="directional_scaffold_hopping:MyQSAR_1,MyQSAR_2" # directional_optimization + scaffold_hopping = directional_scaffold_hopping
 export start_smiles="COC(=O)CCC/N=C1\SCCN1Cc1ccccc1" # SMILES of strat molecules
 export optim="AdamW" 
 export replica_num=10 # [1,600]
