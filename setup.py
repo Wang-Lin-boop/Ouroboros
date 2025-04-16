@@ -1,0 +1,32 @@
+from setuptools import setup, find_packages
+
+setup(
+    name="ouroboros",
+    version="0.1",
+    packages=find_packages(),
+    install_requires=[
+        'six==1.17.0',
+        'tqdm==4.67.1',
+        'dill==0.3.9',
+        'pyarrow==19.0.0',
+        'pandas==1.5.3',
+        'scipy==1.13.1',
+        'matplotlib==3.9.4',
+        'numpy==1.23.5',
+        'seaborn==0.13.2',
+        'selfies==2.2.0',
+        'oddt==0.7',
+        'scikit-learn==1.6.1',
+        'rdkit-pypi==2024.09.5',
+        'dgllife',
+        'torch==2.2.1',
+        'torchvision==0.17.1',
+        'torchaudio==2.2.1',
+        'pytorch-triton',
+    ],
+    dependency_links=[
+        'https://data.dgl.ai/wheels/torch-2.2/cu121/repo.html',
+        'https://download.pytorch.org/whl/cu121',
+        'https://download.pytorch.org/whl/nightly/cu121',
+    ],
+)

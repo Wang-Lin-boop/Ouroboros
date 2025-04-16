@@ -50,7 +50,7 @@ To set up the Ouroboros model, we recommend using conda for Python environment c
 > Creating Ouroboros environment   
 
 ``` shell
-    conda create -n Ouroboros python=3.9
+    conda create -n Ouroboros python=3.9 -y
 ```
 
 > Setting up Ouroboros PATH and configuration   
@@ -69,6 +69,17 @@ To set up the Ouroboros model, we recommend using conda for Python environment c
 ```
 
 Before running Ouroboros, you need to install dependency packages.   
+
+> installing by setuptools
+
+```
+pip install . \
+  -f https://data.dgl.ai/wheels/torch-2.2/cu121/repo.html \
+  --extra-index-url https://download.pytorch.org/whl/cu121 \
+  --extra-index-url https://download.pytorch.org/whl/nightly/cu121
+```
+
+> installing step by step
 
 ```
 conda activate Ouroboros
