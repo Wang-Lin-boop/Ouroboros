@@ -30,7 +30,7 @@ class Pharm_Profiler:
                 lambda x:check_smiles_validity(x)
             )
         dataset = dataset[dataset[smiles_column]!='smiles_unvaild']
-        return dataset
+        return dataset.reset_index(drop=True)
 
     def update_probes(self, 
         name,
