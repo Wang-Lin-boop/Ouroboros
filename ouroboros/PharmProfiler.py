@@ -216,7 +216,7 @@ if __name__ == '__main__':
     if os.path.exists(f'{library_name}.pkl'):
         predictor.database = pd.read_pickle(f'{library_name}.pkl')
     elif os.path.exists(f'{model_name}/{library_name}.pkl'):
-        predictor.database = pd.read_pickle(f'{model_name}/{sys.argv[4]}.pkl')
+        predictor.database = pd.read_pickle(f'{model_name}/{library_name}.pkl')
     else:
         compound_library = pd.read_csv(sys.argv[4])
         features_database = predictor.update_library(
