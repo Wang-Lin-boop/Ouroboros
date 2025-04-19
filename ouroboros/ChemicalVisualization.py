@@ -28,6 +28,7 @@ if __name__ == '__main__':
     dataset = encoder.prepare(
         dataset, smiles_column = smiles_column
     )
+    # dataset.to_csv(f"{dataset_name}_{os.path.basename(model_name)}_encoding.csv", index=False)
     for reduce_dimension_method in reduce_dimension_method_list:
         _ = encoder.reduce_dimension_plot(
             dataset, 

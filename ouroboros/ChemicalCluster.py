@@ -27,6 +27,7 @@ if __name__ == '__main__':
     dataset = encoder.prepare(
         dataset, smiles_column = smiles_column
     )
+    # dataset.to_csv(f"{dataset_name}_{os.path.basename(model_name)}_encoding.csv", index=False)
     for cluster_method in cluster_method_list:
         dataset = encoder.cluster(
             dataset, 
