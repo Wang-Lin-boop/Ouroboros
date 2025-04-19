@@ -129,7 +129,7 @@ if __name__ == "__main__":
     ## read the models
     encoders = {}
     for model_name in method.split(":"):
-        if os.path.exists(f'{model_name}/GeminiMol.pt'):
+        if os.path.exists(f'{model_name}/MolEncoder.pt'):
             from model.GeminiMol import GeminiMol
             encoders[model_name] = GeminiMol(
                 model_path = model_name, 
