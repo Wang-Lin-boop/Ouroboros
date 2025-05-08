@@ -68,18 +68,20 @@ To set up the Ouroboros model, we recommend using conda for Python environment c
     source ~/.bashrc
 ```
 
-Before running Ouroboros, you need to install dependency packages.   
+Before running Ouroboros, you need to install dependency packages, you can choose one of the following ways.   
 
-> installing by setuptools
+> 1) installing by setuptools 
 
 ```
+conda activate Ouroboros
+
 pip install . \
   -f https://data.dgl.ai/wheels/torch-2.2/cu121/repo.html \
   --extra-index-url https://download.pytorch.org/whl/cu121 \
   --extra-index-url https://download.pytorch.org/whl/nightly/cu121
 ```
 
-> installing step by step
+> 2) installing step by step
 
 ```
 conda activate Ouroboros
