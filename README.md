@@ -74,7 +74,7 @@ Before running Ouroboros, you need to install dependency packages, you can choos
 
 ```
 conda activate Ouroboros
-
+cd ${Ouroboros}
 pip install . \
   -f https://data.dgl.ai/wheels/torch-2.2/cu121/repo.html \
   --extra-index-url https://download.pytorch.org/whl/cu121 \
