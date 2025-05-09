@@ -78,7 +78,6 @@ cd ${Ouroboros}
 pip install . \
   -f https://data.dgl.ai/wheels/torch-2.2/cu121/repo.html \
   --extra-index-url https://download.pytorch.org/whl/cu121 \
-  --extra-index-url https://download.pytorch.org/whl/nightly/cu121
 ```
 
 > 2) installing step by step
@@ -98,8 +97,6 @@ pip install dgllife
 
 pip3 install torch==2.2.1 torchvision==0.17.1 torchaudio==2.2.1 \
 --index-url https://download.pytorch.org/whl/cu121
-
-pip install pytorch-triton --extra-index-url "https://download.pytorch.org/whl/nightly/cu121"
 ```
 
 </details>

@@ -22,11 +22,9 @@ setup(
         'torch==2.2.1',
         'torchvision==0.17.1',
         'torchaudio==2.2.1',
-        'pytorch-triton',
     ],
     dependency_links=[
         'https://data.dgl.ai/wheels/torch-2.2/cu121/repo.html',
         'https://download.pytorch.org/whl/cu121',
-        'https://download.pytorch.org/whl/nightly/cu121',
     ],
 )
