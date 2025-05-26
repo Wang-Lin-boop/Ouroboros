@@ -8,7 +8,7 @@
   <img style="float: center" src="imgs/ouroboros.jpg" alt="alt text" width="650px" align="center"/>
 </p>
 
-This repository provides the official implementation of the Ouroboros model and utilities. Ouroboros aims to bridge the gap between representation learning and generative AI models and **facilitate chemical space navigation for directed chemical evolution**. Ouroboros first employs representation learning to encode molecular graphs into **1D vectors**, which are then **decoded independently** into molecular property prediction and molecular structure production. Please also refer to our [paper]() for a detailed description of Ouroboros.     
+This repository provides the official implementation of the Ouroboros model and utilities. Ouroboros aims to bridge the gap between representation learning and generative AI models and **facilitate chemical space navigation for directed chemical evolution**. Ouroboros first employs representation learning to encode molecular graphs into **1D vectors**, which are then **decoded independently** into molecular property prediction and molecular structure production. Please also refer to our [paper](https://doi.org/10.1101/2025.03.18.643899) for a detailed description of Ouroboros.     
 
 ## 💗 Motivation  
 
@@ -107,9 +107,9 @@ pip3 install torch==2.2.1 torchvision==0.17.1 torchaudio==2.2.1 \
 
 In this repository, we provide the molecular dataset (`datasets/MolecularDataset.csv`), pre-trained Ouroboros models and useful chemical datasets, you can download the last two via [ZhangLab WebPage](https://zhanglab.comp.nus.edu.sg/Ouroboros/). Then, we need place the models to the `${ouroboros_lib}`, and place the chemical datasets to `${ouroboros_dataset}`. Besides this, benchmark test sets (e.g. DUD-E and LIT-PCBA) are available from the original article, or to get pre-processed data, you can download it from [Zenodo](https://zenodo.org/records/10450788).        
 
-We provide three different versions of the model, all of them trained based on the strategy reported in the paper, with the difference that:    
+We provide three different versions of the model, all of them trained based on the strategy reported in the [paper](https://doi.org/10.1101/2025.03.18.643899), with the difference that:    
 ```
-1. M0 was trained and tested strictly according to the methodology section of our paper;      
+1. M0 was trained and tested strictly according to the methodology section of our [paper](https://doi.org/10.1101/2025.03.18.643899);      
 2. M1c and M1d: training datasets used for their molecular decoders consisting more complex sources and with SMILES (c) and SELFIES (d) as the chemical language.      
 ```
 In this GitHub repository, we update the latest version of the code and models for Ouroboros (they usually have better performance). If your goal is only to reproduce the results in the article, please use the original model and source code provided on [ZhangLab WebPage](https://zhanglab.comp.nus.edu.sg/Ouroboros/), or use the 0.1.0 release of the repository. If the current version does not meet the demands of your drug discovery program, feel free to contact [us](Wanglin1102@outlook.com) to try our in-house version.         
