@@ -178,10 +178,9 @@ export profile_set="profile.csv" # SMILES (same to compound library) and Label/T
 export label_col="Target" # weights for profiles, can be Target, Label or other your provided in profile.csv
 export compound_library="${ouroboros_dataset}/commercial.csv" 
 export smiles_column="SMILES" # Specify the column name in the compound_library
-export keep_top=1000
-export probe_cluster="Yes"
+export probe_cluster="Yes" # Consider the maximum similarity (Yes) or summed similarity (No) of the same group of molecules
 export flooding=0.5
-python -u ${ouroboros_app}/PharmProfiler.py "${ouroboros_lib}/${ouroboros_model}" "${job_name}" "${smiles_column}" "${compound_library}" "${profile_set}" "${label_col}" "${probe_cluster}" "${flooding}" "${keep_top}" 
+python -u ${ouroboros_app}/PharmProfiler.py "${ouroboros_lib}/${ouroboros_model}" "${job_name}" "${smiles_column}" "${compound_library}" "${profile_set}" "${label_col}" "${probe_cluster}" "${flooding}" 
 ```
 
 After the initial run of PharmProfiler, a extracted feature database `xxx.pkl` will be generated in `${ouroboros_model}`. Subsequent screening tasks on the same compound library can benefit from PharmProfiler automatically reading the feature file, which helps to accelerate the running speed.    
