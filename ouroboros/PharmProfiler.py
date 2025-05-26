@@ -155,7 +155,6 @@ if __name__ == '__main__':
         batch_size = 512,
         predictor_info = {},
         generator = False,
-        flooding = [0.3, 0.6], # CSS sim, 2D sim, min sim
         threads = 40
     )
     predictor = Pharm_Profiler(
