@@ -179,7 +179,7 @@ export label_col="Target" # weights for profiles, can be Target, Label or other 
 export compound_library="${ouroboros_dataset}/commercial.csv" 
 export smiles_column="SMILES" # Specify the column name in the compound_library
 export probe_cluster="Yes" # Consider the maximum similarity (Yes) or summed similarity (No) of the same group of molecules
-export flooding=0.5
+export flooding=0.55 # Only molecules exceeding this value will be considered
 python -u ${ouroboros_app}/PharmProfiler.py "${ouroboros_lib}/${ouroboros_model}" "${job_name}" "${smiles_column}" "${compound_library}" "${profile_set}" "${label_col}" "${probe_cluster}" "${flooding}" 
 ```
 
