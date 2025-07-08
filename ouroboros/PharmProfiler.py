@@ -220,7 +220,7 @@ if __name__ == '__main__':
         compound_library = pd.read_csv(sys.argv[4])
         features_database = predictor.update_library(
             compound_library,
-            prepare = False,
+            prepare = True,
             smiles_column = smiles_col,
         )
         # save database to parquet
