@@ -49,9 +49,9 @@ if __name__ == '__main__':
         model_name = model_name, 
         batch_size = 128,
         predictor_info = {
-            'Lipophilicity': 0.5, # 1.5 if not standardization
-            'Caco2': 0.8, # -2.0 if not standardization
-            'Solubility': 0.8, # -2.0 if not standardization
+            # 'Lipophilicity': 0.5, # 1.5 if not standardization
+            # 'Caco2': 0.8, # -2.0 if not standardization
+            # 'Solubility': 0.8, # -2.0 if not standardization
         },
         driver = sample_mode[0],
         mol4seed = mol4seed,

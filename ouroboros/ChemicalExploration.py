@@ -30,10 +30,10 @@ if __name__ == '__main__':
         'directional_scaffold_hopping'
     ]:
         predictor_info = {
-            'Lipophilicity': 0.6,
-            'Caco2': 0.8,
-            'Solubility': 0.7,
-            'SA': 1.0
+            # 'Lipophilicity': 0.6,
+            # 'Caco2': 0.8,
+            # 'Solubility': 0.7,
+            # 'SA': 1.0
         }
         if ":" in running_mode:
             running_params = running_mode.split(":")
