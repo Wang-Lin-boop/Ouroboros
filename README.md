@@ -168,7 +168,7 @@ The compound libraries are also stored in CSV format in the `${ouroboros_dataset
 
 To perform virtual screening, the following command can be used.   
 
-Here, `profile_set` represents the provided pharmacological profile by the user, `keep_top` indicates the number of compounds to be outputted in the end, and `probe_cluster` determines whether compounds with the same weight should be treated as a cluster. Compounds within the same cluster will be compared individually with the query mol, and the highest similarity score will be taken as the score of query mol.   
+Here, `profile_set` represents the provided pharmacological profile by the user, `flooding` indicates the minimimal similarity as a threshould, and `probe_cluster` determines whether compounds with the same weight should be treated as a cluster. Compounds within the same cluster will be compared individually with the query mol, and the highest similarity score will be taken as the score of query mol.   
 
 We have provided a processed version of the commercial compound library at the `${ouroboros_dataset}/commercial.csv`, which contained 19,116,695 purchasable compounds. To perform target identification, the compound library can be replaced with the `${ouroboros_dataset}/DTIDB.csv`, which contains drug-target relationships. This is a processed version of the BindingDB database, which contains 2,159,221 target-ligand paris.      
 
