@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <img style="float: center" src="imgs/ouroboros.jpg" alt="alt text" width="650px" align="center"/>
+  <img style="float: center" src="imgs/ouroboros.png" alt="alt text" width="650px" align="center"/>
 </p>
 
 This repository provides the official implementation of the Ouroboros model and utilities. Ouroboros aims to bridge the gap between representation learning and generative AI models and **facilitate chemical space navigation for directed chemical evolution**. Ouroboros first employs representation learning to encode molecular graphs into **1D vectors**, which are then **decoded independently** into molecular property prediction and molecular structure production. Please also refer to our [paper](https://doi.org/10.1101/2025.03.18.643899) for a detailed description of Ouroboros.     
