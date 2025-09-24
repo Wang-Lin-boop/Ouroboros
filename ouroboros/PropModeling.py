@@ -44,6 +44,16 @@ if __name__ == "__main__":
     # normalize data
     task_type_list = []
     for label in label_dict.keys():
+        train_data[label] = train_data[label].replace(
+            {
+            'Active': 1, 
+            'Inactive': 0, 
+            'active': 1, 
+            'inactive': 0, 
+            1: 1, 
+            0: 0
+            }
+        )
         max_value = train_data[label].max()
         min_value = train_data[label].min()
         if min_value == 0.0 and max_value == 1.0:
