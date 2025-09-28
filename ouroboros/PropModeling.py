@@ -43,17 +43,18 @@ if __name__ == "__main__":
         )
     # normalize data
     task_type_list = []
-    for label in label_dict.keys():
-        train_data[label] = train_data[label].replace(
-            {
+    label_map = {
             'Active': 1, 
             'Inactive': 0, 
             'active': 1, 
             'inactive': 0, 
             1: 1, 
             0: 0
-            }
-        )
+        }
+    for label in label_dict.keys():
+        train_data[label] = train_data[label].replace(label_map)
+        val_data[label] = val_data[label].replace(label_map)
+        test_data[label] = test_data[label].replace(label_map)
         max_value = train_data[label].max()
         min_value = train_data[label].min()
         if min_value == 0.0 and max_value == 1.0:
@@ -109,7 +110,7 @@ if __name__ == "__main__":
         optim_type = 'AdamW',
         weight_decay = 0.01,
         patience = 60,
-        frozen_steps = 999999999999999,
+        frozen_steps = 999999999999999999, # 1000 for finetuning
         warmup_factor = 0.1, 
         num_warmup_steps = batch_group*200,
         T_max = batch_group*200,

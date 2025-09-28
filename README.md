@@ -189,7 +189,7 @@ After the initial run of PharmProfiler, a extracted feature database `xxx.pkl` w
 </details>   
 
 <details>
-<summary>Molecular Proptery Modeling</summary>
+<summary>Molecular Proptery Modeling (QSAR & ADMET)</summary>
 <br>
 
 > 1. Molecular Property Datasets

@@ -9,6 +9,7 @@ from dgllife.utils import atom_type_one_hot, atom_formal_charge, atom_hybridizat
 from dgl.nn.pytorch.glob import GlobalAttentionPooling
 from dgl.nn import SetTransformerEncoder
 from dgllife.model.gnn.wln import WLN
+from dgllife.model.readout.mlp_readout import MLPNodeReadout
 from .modules import (
     activation_dict
 )
@@ -124,22 +125,6 @@ class MolecularPooling(nn.Module):
         super(MolecularPooling, self).__init__()
         self.projector = projector
         activation = 'ReLU' if projector == 'SeT' else projector
-        gate_nn = nn.Sequential(
-            nn.Linear(num_features, num_features * 3),
-            nn.BatchNorm1d(num_features * 3),
-            activation_dict[activation],
-            nn.Linear(num_features * 3, 1024),
-            nn.BatchNorm1d(1024),
-            activation_dict[activation],
-            nn.Linear(1024, 128),
-            activation_dict[activation],
-            nn.Linear(128, 128),
-            activation_dict[activation],
-            nn.Linear(128, 128),
-            activation_dict[activation],
-            nn.Linear(128, 1),
-            nn.Sigmoid()
-        )
         if projector == 'SeT':
             self.attention = SetTransformerEncoder(
                 d_model = num_features,
@@ -153,12 +138,50 @@ class MolecularPooling(nn.Module):
                 dropouta = 0.3
             )
             self.attention.to('cuda')
+            gate_nn = nn.Sequential(
+                nn.Linear(num_features, num_features * 3),
+                nn.BatchNorm1d(num_features * 3),
+                activation_dict[activation],
+                nn.Linear(num_features * 3, 1024),
+                nn.BatchNorm1d(1024),
+                activation_dict[activation],
+                nn.Linear(1024, 128),
+                activation_dict[activation],
+                nn.Linear(128, 128),
+                activation_dict[activation],
+                nn.Linear(128, 128),
+                activation_dict[activation],
+                nn.Linear(128, 1),
+                nn.Sigmoid()
+            )
             self.readout = GlobalAttentionPooling(
                 gate_nn = torch.compile(gate_nn),
                 # Adding feat_nn reduces the representation learning capability, /
                 # with a significant performance degradation on the zero-shot task
             )
+        elif projector == 'MeanMLP':
+            self.readout = MLPNodeReadout(
+                num_features, num_features, num_features,
+                activation=activation_dict['LeakyReLU'],
+                mode='mean'
+            )
         else:
+            gate_nn = nn.Sequential(
+                nn.Linear(num_features, num_features * 3),
+                nn.BatchNorm1d(num_features * 3),
+                activation_dict[activation],
+                nn.Linear(num_features * 3, 1024),
+                nn.BatchNorm1d(1024),
+                activation_dict[activation],
+                nn.Linear(1024, 128),
+                activation_dict[activation],
+                nn.Linear(128, 128),
+                activation_dict[activation],
+                nn.Linear(128, 128),
+                activation_dict[activation],
+                nn.Linear(128, 1),
+                nn.Sigmoid()
+            )
             # init the readout and output layers
             self.readout = GlobalAttentionPooling(
                 gate_nn = torch.compile(gate_nn),
@@ -173,11 +196,17 @@ class MolecularPooling(nn.Module):
                 mol_graph, 
                 mol_graph.ndata['atom_type']
             )
-        encoding, atom_weights = self.readout(
-            mol_graph, 
-            mol_graph.ndata['atom_type'], 
-            get_attention = True
-        )
+        if self.projector == 'MeanMLP':
+            encoding = self.readout(
+                mol_graph, 
+                mol_graph.ndata['atom_type']
+            )
+        else:
+            encoding, atom_weights = self.readout(
+                mol_graph, 
+                mol_graph.ndata['atom_type'], 
+                get_attention = True
+            )
         if get_atom_weights:
             return encoding, atom_weights
         else:
