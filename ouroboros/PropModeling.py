@@ -76,14 +76,14 @@ if __name__ == "__main__":
         task_type = 'binary'
         print(f'NOTE: all label is binary. So we set {predictor_name} as binary classification model.')
     # set hyper-parameters based on the number of training samples
-    if len(train_data) > 20000:
-        batch_size, learning_rate, batch_group = 128, 3.0e-5, 10
-    elif len(train_data) > 5000:
-        batch_size, learning_rate, batch_group = 96, 1.0e-5, 10
-    elif len(train_data) > 1000:
-        batch_size, learning_rate, batch_group = 64, 1.0e-5, 5
+    if len(train_data) > 4096:
+        batch_size, learning_rate, batch_group, hidden_dim = 512, 5.0e-5, 10, 30720
+    elif len(train_data) > 2048:
+        batch_size, learning_rate, batch_group, hidden_dim = 256, 3.0e-5, 10, 20480
+    elif len(train_data) > 512:
+        batch_size, learning_rate, batch_group, hidden_dim = 128, 1.0e-5, 10, 12288
     else:
-        batch_size, learning_rate, batch_group = 48, 1.0e-5, 5
+        batch_size, learning_rate, batch_group, hidden_dim = 72, 1.0e-5, 10, 8192
     ## create the encoder models
     QSAR_model = QSAR(
         model_name = ouroboros_path,
@@ -95,9 +95,9 @@ if __name__ == "__main__":
             'label_dict': label_dict,
         },
         params = {
-            "hidden_dim": 12288, # between 2048 and 12288
-            "dropout_rate": 0.3 if task_type == 'binary' else 0.1, 
-            "activation": 'SiLU',
+            "hidden_dim": hidden_dim, # between 2048 and 12288
+            "dropout_rate": 0.5, 
+            "activation": 'Sigmoid',
             "projection_transform": 'Sigmoid',
             "linear_projection": False
         }
@@ -109,8 +109,8 @@ if __name__ == "__main__":
         learning_rate = learning_rate,
         optim_type = 'AdamW',
         weight_decay = 0.01,
-        patience = 60,
-        frozen_steps = 999999999999999999, # 1000 for finetuning
+        patience = 40,
+        frozen_steps = 500,
         warmup_factor = 0.1, 
         num_warmup_steps = batch_group*200,
         T_max = batch_group*200,
