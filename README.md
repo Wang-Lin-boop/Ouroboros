@@ -106,7 +106,7 @@ pip3 install torch==2.2.1 torchvision==0.17.1 torchaudio==2.2.1 \
 <summary>Download datasets and Ouroboros models</summary>
 <br>
 
-In this repository, we provide the molecular dataset (`datasets/MolecularDataset.csv`), pre-trained Ouroboros models and useful chemical datasets, you can download the last two via [ZhangLab WebPage](https://zhanglab.comp.nus.edu.sg/Ouroboros/). Then, we need place the models to the `${ouroboros_lib}`, and place the chemical datasets to `${ouroboros_dataset}`. Besides this, benchmark test sets (e.g. DUD-E and LIT-PCBA) are available from the original article, or to get pre-processed data, you can download it from [Zenodo](https://zenodo.org/records/10450788).        
+In this repository, we provide the molecular dataset (`datasets/MolecularDataset.csv`), pre-trained Ouroboros models and useful chemical datasets, you can download the last two via [ZhangLab WebPage](https://aideepmed.com/Ouroboros). Then, we need place the models to the `${ouroboros_lib}`, and place the chemical datasets to `${ouroboros_dataset}`. Besides this, benchmark test sets (e.g. DUD-E and LIT-PCBA) are available from the original article, or to get pre-processed data, you can download it from [Zenodo](https://zenodo.org/records/10450788).        
 
 We provide three different versions of the model, all of them trained based on the strategy reported in the [paper](https://doi.org/10.1101/2025.03.18.643899), with the difference that:    
 ```
