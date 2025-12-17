@@ -88,7 +88,8 @@ conda activate Ouroboros
 pip install six==1.17.0 
 pip install tqdm==4.67.1 dill==0.3.9 pyarrow==19.0.0 
 pip install pandas==1.5.3 scipy==1.13.1 matplotlib==3.9.4 
-pip install numpy==1.23.5 seaborn==0.13.2 selfies==2.2.0 oddt==0.7 scikit-learn==1.6.1
+pip install numpy==1.23.5 seaborn==0.13.2 selfies==2.2.0 scikit-learn==1.6.1
+pip install oddt --no-build-isolation
 
 pip install rdkit # rdkit==2024.9.5
 
