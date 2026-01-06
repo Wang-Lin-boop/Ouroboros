@@ -347,9 +347,7 @@ Besides to the functions mentioned in the tutorial above, you can also use vario
 
 ## ⭐ Citing This Work
 
-Directed Chemical Evolution via Navigating Molecular Encoding Space   
-Lin Wang, Yifan Wu, Hao Luo, Minglong Liang, Yihang Zhou, Cheng Chen, Chris Liu, Jun Zhang, Yang Zhang   
-bioRxiv 2025.03.18.643899; doi: https://doi.org/10.1101/2025.03.18.643899   
+L Wang, Y Wu, H Luo, M Liang, Y Zhou, C Chen, J Liu, J Zhang, Y Zhang. Learned Conformational Space and Pharmacophore Into Molecular Foundational Model. Advanced Science (2026): e13556. https://doi.org/10.1002/advs.202513556
 
 ## 💌 Get in Touch
 
