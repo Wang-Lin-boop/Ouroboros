@@ -324,7 +324,7 @@ export loud=0.4 # [0.1,0.5], for replica more than 2, we add the nosie to 1D vec
 export temperature=0.6 # [0.2,0.8]
 export fusion_temperature=0.0 # [0.0,0.5]
 export learning_rate="1.0e-5" # [1.0e-5,1.0e-4]
-python -u ${ouroboros_app}/ChemicalFusion.py "${probe_datasets}@${fusion_targets}" "${ouroboros_lib}/${ouroboros_model}" "${optim}:${replica_num}:${steps}:${step_interval}:${loud}:${temperature}:${learning_rate}" "${job_name}" "${fusion_temperature}"
+python -u ${ouroboros_app}/ChemicalFusion.py "${probe_datasets}@${fusion_targets}" "${ouroboros_lib}/${ouroboros_model}" "${optim}:${replica_num}:${steps}:${step_interval}:${loud}:${temperature}:${learning_rate}" "${job_name}" "True" "${fusion_temperature}"
 ```
 
 By default, chemical fusion only supports fusion between 2 groups of molecules. If you need to fuse multiple groups of molecules, you can achieve this by modifying the `ChemicalFusion.py`.    

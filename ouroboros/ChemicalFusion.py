@@ -75,12 +75,13 @@ if __name__ == '__main__':
     similarity_matrix.to_csv(f'{job_name}_matrix.csv')
     smiles_list_1 = probe_datasets[probe_datasets[target_col]==fusion_targets[0]][smiles_col].tolist()
     smiles_list_2 = probe_datasets[probe_datasets[target_col]==fusion_targets[1]][smiles_col].tolist()
+    fusion_temperature = float(sys.argv[7])
     results = ouroboros_model.chemical_fusion(
         ref_smiles = {
             fusion_targets[0]: smiles_list_1,
             fusion_targets[1]: smiles_list_2
         },
-        temperature = temperature
+        temperature = fusion_temperature
     )
     results.sort_values('Score', ascending=False, inplace=True)
     results['SAScore'] = results['smiles'].apply(cal_SAScore)
