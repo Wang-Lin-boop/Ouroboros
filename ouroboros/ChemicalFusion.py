@@ -53,7 +53,7 @@ if __name__ == '__main__':
             # 'Solubility': 0.8, # -2.0 if not standardization
         },
         driver = sample_mode[0],
-        mol4seed = False if sample_mode[6] in ['False', 'None', 'F', 'No', 'N', 'no', 'false', 'none'] else True,
+        mol4seed = False if sys.argv[6] in ['False', 'None', 'F', 'No', 'N', 'no', 'false', 'none'] else True,
         driver_params = {
             'replica_num': int(sample_mode[1]),
             'num_steps_per_replica': int(sample_mode[2]),
